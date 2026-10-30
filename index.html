@@ -5,18 +5,18 @@
 <style>
 :root{
   color-scheme: light;
-  --sea:#d9edf6; --sand:#f4e8d0; --land:#1f5f8b; --warm:#e8833a;
+  --sea:#d9edf6; --sand:#f4e8d0; --land:#1f5f8b; --warm:#e8833a; --jiang:#23756e; --brick:#a94f36;
   --ink:#17324a; --muted:#4f6b84; --card:#ffffff; --line:#b5d0e0;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --sea:#0e2535; --sand:#43392a; --land:#7fb8dc; --warm:#f2a062;
+    --sea:#0e2535; --sand:#43392a; --land:#7fb8dc; --warm:#f2a062; --jiang:#6fd0c4; --brick:#e0906f;
     --ink:#e6eef5; --muted:#9db4c7; --card:#16324a; --line:#2a4d68;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"]{
-  --sea:#0e2535; --sand:#43392a; --land:#7fb8dc; --warm:#f2a062;
+  --sea:#0e2535; --sand:#43392a; --land:#7fb8dc; --warm:#f2a062; --jiang:#6fd0c4; --brick:#e0906f;
   --ink:#e6eef5; --muted:#9db4c7; --card:#16324a; --line:#2a4d68;
   color-scheme: dark;
 }
@@ -30,12 +30,19 @@ body{
   padding-block:24px 44px;
 }
 .wrap{max-width:980px;margin:0 auto;min-width:0}
-.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);margin:0}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--jiang);font-weight:700;margin:0}
+.wave{display:block;width:100%;height:28px;margin:14px 0 0}
+.motifs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;padding:0;list-style:none}
+.motifs li{font-size:13px;padding:4px 12px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--ink)}
+.motifs li:nth-child(1){border-color:var(--jiang)}
+.motifs li:nth-child(2){border-color:var(--brick)}
+.motifs li:nth-child(3){border-color:var(--warm)}
+.motifs li:nth-child(4){border-color:var(--land)}
 h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:balance}
 .sub{margin:0;color:var(--muted)}
 
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 16px}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.stat{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--jiang);border-radius:14px;padding:14px 16px;min-width:0}
 .stat .k{font-size:13px;color:var(--muted)}
 .stat .v{font-size:26px;font-weight:700;color:var(--land);font-variant-numeric:tabular-nums}
 
@@ -161,6 +168,16 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
     <p class="eyebrow">國立臺南特殊教育學校｜總務處</p>
     <h1>工程追蹤3D島嶼</h1>
     <p class="sub">總務處居中，四座工程島環繞相連。陸地愈高，完成度愈高。</p>
+    <svg class="wave" viewBox="0 0 980 28" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 14 Q 40 2 80 14 T 160 14 T 240 14 T 320 14 T 400 14 T 480 14 T 560 14 T 640 14 T 720 14 T 800 14 T 880 14 T 980 14" fill="none" stroke="var(--jiang)" stroke-width="2.5" opacity=".7"/>
+      <path d="M0 22 Q 40 12 80 22 T 160 22 T 240 22 T 320 22 T 400 22 T 480 22 T 560 22 T 640 22 T 720 22 T 800 22 T 880 22 T 980 22" fill="none" stroke="var(--brick)" stroke-width="1.5" opacity=".5"/>
+    </svg>
+    <ul class="motifs" aria-label="臺南意象">
+      <li>台江濕地</li>
+      <li>安平紅磚</li>
+      <li>黑面琵鷺</li>
+      <li>無障礙共融</li>
+    </ul>
   </header>
 
   <div class="stats">
@@ -451,8 +468,8 @@ function init3D(){
     ? { sky:0x0e2535, sea:0x1f5a7d, sand:0xb8a374, land:0x7fb8dc, hub:0x5fb89f, warm:0xf2a062,
         bridge:0xd8c9a0, bld:0xe6eef5, pole:0xdfe6ea, blue:0x6aa6e0, roof:0xb0704f, door:0x6b5440,
         grass:0x4e8f55, leaf:0x6fbf7a, trunk:0x7a5230, play:0xf2c14e, track:0xc0714b }
-    : { sky:0xd9edf6, sea:0x2f7ea6, sand:0xf0dfb4, land:0x1f5f8b, hub:0x3b8f7a, warm:0xe8833a,
-        bridge:0xc9b07a, bld:0xffffff, pole:0x8fa3b0, blue:0x2f6fb0, roof:0x9c5b3c, door:0x5b4636,
+    : { sky:0xd9edf6, sea:0x2a8c9e, sand:0xf2e2b8, land:0x1f5f8b, hub:0x23756e, warm:0xe8833a,
+        bridge:0xc9b07a, bld:0xffffff, pole:0x8fa3b0, blue:0x2f6fb0, roof:0xa94f36, door:0x5b4636,
         grass:0x6fb36a, leaf:0x4f9a5a, trunk:0x7a5230, play:0xf2c14e, track:0xd9825b };
 
   const ASPHALT = dark ? 0x4b5563 : 0x8b96a3;
@@ -739,7 +756,7 @@ function init3D(){
   const hy = hubIsle.top;
   CUR_TOP = hy;
   boxIn(hubIsle.group, 26, 22, 22, P.bld, 0, hy + 11, 0);
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(18, 10, 4), mat(P.warm));
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(18, 10, 4), mat(P.roof));
   roof.rotation.y = Math.PI / 4;
   roof.scale.setScalar(SZ);
   roof.position.set(0, Y(hy + 27), 0);
@@ -770,6 +787,22 @@ function init3D(){
   scene.add(hubIsle.group);
 
   const bridges = [];
+  // a small flock of black-faced spoonbills (黑面琵鷺) circling the hub
+  const spoonbills = [];
+  for (let i = 0; i < 3; i++) {
+    const bird = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(2.2, 12, 10),
+      new THREE.MeshStandardMaterial({ color:0xf7f3ea, roughness:0.6 }));
+    body.scale.set(1.6, 0.9, 1);
+    const beak = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, 0.5),
+      new THREE.MeshStandardMaterial({ color:0x1b1f27, roughness:0.5 }));
+    beak.position.set(3.4, -0.3, 0);
+    bird.add(body, beak);
+    bird.scale.setScalar(SZ);
+    scene.add(bird);
+    spoonbills.push({ bird, off:i * 2.1, rad:82 + i * 6 });
+  }
+
   // four satellite islands with their facilities, plus bridges to the hub
   const isles = projects.map((p, i) => {
     const o = makeIsland(p.r, p.pct, P.land);
@@ -966,6 +999,16 @@ function init3D(){
       const b = m.br;
       m.car.position.set(b.ax + (b.bx - b.ax) * u, 8.15, b.az + (b.bz - b.az) * u);
       m.car.rotation.y = Math.atan2(-(b.bz - b.az) * m.dir, (b.bx - b.ax) * m.dir);
+    });
+
+    spoonbills.forEach(sb => {
+      const a = t * 0.22 + sb.off;
+      sb.bird.position.set(
+        hub.pos[0] + Math.cos(a) * sb.rad,
+        Y(hubIsle.top) + 52 + Math.sin(t * 1.5 + sb.off) * 3,
+        hub.pos[1] + Math.sin(a) * sb.rad
+      );
+      sb.bird.rotation.y = -a - Math.PI / 2;
     });
 
     renderer.render(scene, camera);
