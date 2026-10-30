@@ -1,0 +1,688 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>工程追蹤3D島嶼</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  color-scheme: light;
+  --sea:#d9edf6; --sand:#f4e8d0; --land:#1f5f8b; --warm:#e8833a;
+  --ink:#17324a; --muted:#4f6b84; --card:#ffffff; --line:#b5d0e0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sea:#0e2535; --sand:#43392a; --land:#7fb8dc; --warm:#f2a062;
+    --ink:#e6eef5; --muted:#9db4c7; --card:#16324a; --line:#2a4d68;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --sea:#0e2535; --sand:#43392a; --land:#7fb8dc; --warm:#f2a062;
+  --ink:#e6eef5; --muted:#9db4c7; --card:#16324a; --line:#2a4d68;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--sea); color:var(--ink);
+  font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+  font-size:15px; line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:24px 44px;
+}
+.wrap{max-width:980px;margin:0 auto;min-width:0}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);margin:0}
+h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:balance}
+.sub{margin:0;color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.stat .k{font-size:13px;color:var(--muted)}
+.stat .v{font-size:26px;font-weight:700;color:var(--land);font-variant-numeric:tabular-nums}
+
+.stage{
+  position:relative; height:min(64vh,540px); min-height:360px;
+  border-radius:18px; overflow:hidden; border:1px solid var(--line);
+  background:var(--sea);
+}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.labels{position:absolute;inset:0;pointer-events:none}
+.tag{
+  position:absolute; left:0; top:0; transform:translate(-50%,-100%);
+  background:var(--card); color:var(--ink); border:1px solid var(--line);
+  border-radius:99px; padding:3px 11px; font-size:13px; white-space:nowrap;
+  font-variant-numeric:tabular-nums; box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+.tag b{color:var(--land)}
+.tag.on{border-color:var(--warm);box-shadow:0 0 0 2px var(--warm)}
+.tag.hub{font-weight:700}
+.mode{
+  position:absolute; top:12px; right:12px; z-index:2;
+  font:inherit; font-size:13px; padding:6px 12px; border-radius:99px; cursor:pointer;
+  background:var(--card); color:var(--ink); border:1px solid var(--line);
+}
+.mode[aria-pressed="true"]{border-color:var(--warm);box-shadow:0 0 0 2px var(--warm) inset}
+.mode:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.times{position:absolute; top:12px; left:12px; z-index:2; display:flex; gap:6px}
+.tbtn{
+  font:inherit; font-size:13px; padding:6px 12px; border-radius:99px; cursor:pointer;
+  background:var(--card); color:var(--ink); border:1px solid var(--line);
+}
+.tbtn[aria-pressed="true"]{border-color:var(--warm);box-shadow:0 0 0 2px var(--warm) inset}
+.tbtn:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.sheet{
+  position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));
+  background:rgba(8,20,30,.45);
+}
+.sheet[hidden]{display:none!important}
+.sheet-box{position:relative;width:min(900px,100%);max-height:90vh;overflow:auto;border-radius:18px}
+.sheet-box .detail{margin-top:0}
+.close{
+  position:absolute; top:12px; right:12px; z-index:1; width:36px; height:36px; border-radius:99px;
+  border:1px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-size:20px; line-height:1; cursor:pointer;
+}
+.close:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.views{position:absolute; right:12px; bottom:10px; z-index:2; display:flex; gap:6px}
+.vbtn{
+  font:inherit; font-size:13px; padding:6px 12px; border-radius:99px; cursor:pointer;
+  background:var(--card); color:var(--ink); border:1px solid var(--line);
+}
+.vbtn[aria-pressed="true"]{border-color:var(--warm);box-shadow:0 0 0 2px var(--warm) inset}
+.vbtn:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.hint{
+  position:absolute; left:12px; bottom:10px; font-size:12px; color:var(--muted);
+  background:var(--card); padding:4px 10px; border-radius:99px; opacity:.92;
+}
+.fallback{padding:20px;margin:0}
+
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+.card{
+  text-align:left; background:var(--card); color:var(--ink);
+  border:1px solid var(--line); border-radius:14px; padding:14px;
+  font:inherit; cursor:pointer; min-width:0;
+}
+.card[aria-pressed="true"]{border-color:var(--warm);box-shadow:0 0 0 2px var(--warm) inset}
+.card:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.card .name{font-weight:700;margin:0 0 6px;overflow-wrap:anywhere}
+.card .meta{font-size:13px;color:var(--muted);margin:0 0 10px;font-variant-numeric:tabular-nums}
+.bar{height:8px;border-radius:99px;background:var(--sand);overflow:hidden;border:1px solid var(--line)}
+.bar > i{display:block;height:100%;background:var(--land);border-radius:99px}
+.pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:99px;background:var(--warm);color:#fff;margin-bottom:8px;font-weight:500}
+
+.detail{
+  margin-top:16px; background:var(--card); border:1px solid var(--line);
+  border-radius:18px; padding:22px; display:grid; gap:18px;
+  grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+}
+.detail h2{font-family:"Noto Serif TC",serif;font-size:22px;margin:0 0 8px;text-wrap:balance}
+.detail .note{margin:0 0 14px}
+.detail .big{font-size:40px;font-weight:700;color:var(--land);font-variant-numeric:tabular-nums;line-height:1}
+.detail .small{font-size:13px;color:var(--muted);margin:6px 0 10px}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.timeline li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;padding-left:14px;border-left:3px solid var(--line);min-width:0}
+.timeline li.past{border-left-color:var(--warm)}
+.timeline .d{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.timeline .t{overflow-wrap:anywhere}
+.timeline .tag2{grid-column:2;font-size:12px;color:var(--muted)}
+.timeline li.past .tag2{color:var(--warm);font-weight:500}
+
+.foot{margin-top:16px;font-size:13px;color:var(--muted)}
+.foot a{color:var(--land)}
+
+@media (max-width:760px){
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .detail{grid-template-columns:minmax(0,1fr)}
+  h1{font-size:24px}
+  .stat .v{font-size:20px}
+}
+@media (max-width:420px){ .cards{grid-template-columns:minmax(0,1fr)} }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">國立臺南特殊教育學校｜總務處</p>
+    <h1>工程追蹤3D島嶼</h1>
+    <p class="sub">總務處居中，四座工程島環繞相連。陸地愈高，完成度愈高。</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="k">整體完成度</div><div class="v">50.0%</div></div>
+    <div class="stat"><div class="k">已完成／總任務</div><div class="v">37 / 74</div></div>
+    <div class="stat"><div class="k">執行中工程</div><div class="v">4 項</div></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="labels" id="labels"></div>
+    <div class="times" role="group" aria-label="天空時段">
+      <button class="tbtn" type="button" data-sky="night" aria-pressed="false">黑夜</button>
+      <button class="tbtn" type="button" data-sky="afternoon" aria-pressed="false">下午</button>
+      <button class="tbtn" type="button" data-sky="day" aria-pressed="true">白天</button>
+    </div>
+    <div class="views" role="group" aria-label="視角">
+      <button class="vbtn" type="button" data-view="free" aria-pressed="true">自由旋轉</button>
+      <button class="vbtn" type="button" data-view="bird" aria-pressed="false">鳥瞰</button>
+      <button class="vbtn" type="button" data-view="top" aria-pressed="false">俯視</button>
+    </div>
+    <button class="mode" id="modeBtn" type="button" aria-pressed="false">平移模式</button>
+    <div class="hint">拖曳旋轉・滾輪縮放・點島嶼查看（右鍵或按住 Shift 拖曳可平移）</div>
+  </div>
+
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet-box" role="dialog" aria-modal="true" aria-label="工程詳細資料">
+      <button class="close" id="closeBtn" type="button" aria-label="關閉">×</button>
+      <section class="detail" id="detail"></section>
+    </div>
+  </div>
+
+  <p class="foot">
+    資料日期 2026/09/23，依修正版工程明細。總覽頁仍顯示舊版共融遊具進度 3.4%，本頁採修正版的 62.5%。
+    標示「已到期」的節點尚未在來源表確認，請核對原始工作表。
+    <a href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener">開啟原始工程進度試算表</a>
+  </p>
+</div>
+
+<script>
+const TODAY = "2026-10-30";
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const hub = {
+  name:"總務處", pct:50.0, done:37, total:74,
+  note:"115 學年度四項工程整體完成度 50.0%，共 37／74 項任務已完成。點選周圍四座島可查看各工程節點。",
+  pos:[0,0], r:70
+};
+
+// order around the hub: back-left, back-right, front-right, front-left
+const projects = [
+  { name:"無障礙斜坡道工程", short:"無障礙斜坡道", kind:"ramp", pct:28.0, done:7, total:25, status:"變更設計",
+    note:"原案流標後改採 RC 設計，基本設計提送作業進行中。",
+    milestones:[["2026-10-01","預定提送基本設計"],["2026-11-01","預定提送細部設計"],["2027-08-12","預定完成付款作業"]],
+    pos:[-150,-80], r:52 },
+  { name:"性別友善廁所工程", short:"性別友善廁所", kind:"restroom", pct:62.5, done:10, total:16, status:"施工階段",
+    note:"工程施工中，工作表排定 9/28 完工。",
+    milestones:[["2026-08-01","正式開工"],["2026-09-28","預定工程完成"],["2026-10-27","預定完成付款作業"]],
+    pos:[150,-80], r:50 },
+  { name:"跑道改建工程", short:"操場跑道", kind:"track", pct:58.8, done:10, total:17, status:"招標階段",
+    note:"招標公告已完成，工作表排定 9/29 開標。",
+    milestones:[["2026-09-14","招標公告完成"],["2026-09-29","預定開標"],["2027-03-24","預定完成付款作業"]],
+    pos:[150,110], r:54 },
+  { name:"共融遊具改建工程", short:"共融遊具", kind:"play", pct:62.5, done:10, total:16, status:"施工階段",
+    note:"廠商提送三書已完成，工程於 8/17 開工並持續施工。",
+    milestones:[["2026-08-17","正式開工"],["2026-10-15","預定竣工確認"],["2026-10-30","預定完成付款作業"]],
+    pos:[-150,110], r:50 }
+];
+
+let active = -1;  // index into projects; -1 means the hub (camera starts centered on 總務處)
+const detail = document.getElementById("detail");
+const stage = document.getElementById("stage");
+const labelsEl = document.getElementById("labels");
+
+/* ---------- shared UI ---------- */
+function renderDetail(){
+  if (active < 0){
+    detail.innerHTML = `
+      <div>
+        <span class="pill">中心</span>
+        <h2>${hub.name}</h2>
+        <p class="note">${hub.note}</p>
+        <div class="big">${hub.pct.toFixed(1)}%</div>
+        <p class="small">已完成 ${hub.done} 項，共 ${hub.total} 項任務</p>
+        <div class="bar"><i style="width:${hub.pct}%"></i></div>
+      </div>
+      <div>
+        <h3 style="margin:0 0 10px;font-size:16px">四座工程島</h3>
+        <ol class="timeline">${projects.map(p => `<li><span class="d">${p.pct.toFixed(1)}%</span><span class="t">${p.name}</span></li>`).join("")}</ol>
+      </div>`;
+    return;
+  }
+  const p = projects[active];
+  const items = p.milestones.map(([d, label]) => {
+    const past = d < TODAY;
+    return `<li class="${past ? "past" : ""}">
+      <span class="d">${d.replace(/-/g, "/")}</span>
+      <span class="t">${label}</span>
+      <span class="tag2">${past ? "已到期・待確認" : "待辦"}</span>
+    </li>`;
+  }).join("");
+  detail.innerHTML = `
+    <div>
+      <span class="pill">${p.status}</span>
+      <h2>${p.name}</h2>
+      <p class="note">${p.note}</p>
+      <div class="big">${p.pct.toFixed(1)}%</div>
+      <p class="small">已完成 ${p.done} 項，共 ${p.total} 項任務</p>
+      <div class="bar"><i style="width:${p.pct}%"></i></div>
+    </div>
+    <div>
+      <h3 style="margin:0 0 10px;font-size:16px">關鍵節點</h3>
+      <ol class="timeline">${items}</ol>
+    </div>`;
+}
+function select(i){ openSheet(i); }
+const sheet = document.getElementById("sheet");
+function openSheet(i){
+  active = i;
+  renderDetail();
+  sheet.hidden = false;
+  document.getElementById("closeBtn").focus();
+  if (window.focusIsland) window.focusIsland(i);
+}
+function closeSheet(){ sheet.hidden = true; }
+document.getElementById("closeBtn").addEventListener("click", closeSheet);
+sheet.addEventListener("click", e => { if (e.target === sheet) closeSheet(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !sheet.hidden) closeSheet(); });
+
+/* ---------- 3D scene ---------- */
+const hasGL = (() => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl") || c.getContext("experimental-webgl")); } catch(e){ return false; } })();
+
+if (typeof THREE === "undefined" || !hasGL){
+  stage.innerHTML = '<p class="fallback">3D 畫面無法在此瀏覽器載入，請點選下方工程查看進度。</p>' +
+    '<div class="cards" style="margin:12px">' + projects.map((p, i) =>
+      `<button class="card" type="button" data-i="${i}"><span class="pill">${p.status}</span><p class="name">${p.name}</p><p class="meta">${p.pct.toFixed(1)}%</p></button>`
+    ).join("") + '</div>';
+  stage.addEventListener("click", e => {
+    const b = e.target.closest("[data-i]");
+    if (b) openSheet(+b.dataset.i);
+  });
+} else {
+  init3D();
+}
+
+function init3D(){
+  const dark = document.documentElement.dataset.theme === "dark" ||
+    (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+  const P = dark
+    ? { sky:0x0e2535, sea:0x1f5a7d, sand:0xb8a374, land:0x7fb8dc, hub:0x5fb89f, warm:0xf2a062,
+        bridge:0xd8c9a0, bld:0xe6eef5, pole:0xdfe6ea, blue:0x6aa6e0, roof:0xb0704f, door:0x6b5440,
+        grass:0x4e8f55, leaf:0x6fbf7a, trunk:0x7a5230, play:0xf2c14e, track:0xc0714b }
+    : { sky:0xd9edf6, sea:0x2f7ea6, sand:0xf0dfb4, land:0x1f5f8b, hub:0x3b8f7a, warm:0xe8833a,
+        bridge:0xc9b07a, bld:0xffffff, pole:0x8fa3b0, blue:0x2f6fb0, roof:0x9c5b3c, door:0x5b4636,
+        grass:0x6fb36a, leaf:0x4f9a5a, trunk:0x7a5230, play:0xf2c14e, track:0xd9825b };
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  stage.prepend(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(P.sky);
+  scene.fog = new THREE.Fog(P.sky, 500, 1200);
+
+  const camera = new THREE.PerspectiveCamera(40, 1, 1, 2500);
+  const sph = { theta:0.5, phi:0.95, r:520, rTarget:520 };
+  const target = new THREE.Vector3(0, 8, 0);
+  const desired = new THREE.Vector3(0, 8, 0);
+
+  const ambient = new THREE.AmbientLight(0xffffff, 0.65);
+  scene.add(ambient);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+  sun.position.set(200, 400, 150);
+  scene.add(sun);
+
+  // sea
+  const seaGeo = new THREE.PlaneGeometry(1600, 1600, 80, 80);
+  const sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({
+    color:P.sea, roughness:0.35, metalness:0.05, flatShading:true
+  }));
+  sea.rotation.x = -Math.PI / 2;
+  scene.add(sea);
+
+  // stars for the night sky
+  const starPts = [];
+  for (let i = 0; i < 420; i++){
+    starPts.push((Math.random() - 0.5) * 2400, 180 + Math.random() * 900, (Math.random() - 0.5) * 2400);
+  }
+  const starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPts, 3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+    color:0xffffff, size:2, sizeAttenuation:false, fog:false
+  }));
+  stars.visible = false;
+  scene.add(stars);
+
+  // three sky presets: 黑夜 (night), 下午 (afternoon), 白天 (day)
+  const SKIES = {
+    day:       { sky:0xd9edf6, sea:P.sea,    sun:0xffffff, sunI:0.85, sunPos:[200,400,150],   amb:0.65 },
+    afternoon: { sky:0xf3c9a0, sea:0x3d7f9a, sun:0xffd08a, sunI:1.00, sunPos:[320,170,140],   amb:0.55 },
+    night:     { sky:0x0a1a2a, sea:0x163a55, sun:0x9ab7d9, sunI:0.35, sunPos:[-200,300,-150], amb:0.35 }
+  };
+  const skyButtons = [...document.querySelectorAll(".tbtn[data-sky]")];
+  function applySky(name){
+    const S = SKIES[name];
+    scene.background.setHex(S.sky);
+    scene.fog.color.setHex(S.sky);
+    sea.material.color.setHex(S.sea);
+    sun.color.setHex(S.sun);
+    sun.intensity = S.sunI;
+    sun.position.set(...S.sunPos);
+    ambient.intensity = S.amb;
+    stars.visible = name === "night";
+    skyButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sky === name)));
+  }
+  skyButtons.forEach(b => b.addEventListener("click", () => applySky(b.dataset.sky)));
+  applySky("day");
+
+  /* --- small helpers for props --- */
+  const mat = c => new THREE.MeshStandardMaterial({ color:c, roughness:0.7 });
+  function boxIn(g, w, h, d, c, x, y, z, rz = 0, ry = 0){
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
+    m.position.set(x, y, z); m.rotation.set(0, ry, rz);
+    g.add(m); return m;
+  }
+  function cylIn(g, rt, rb, h, c, x, y, z, seg = 10){
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat(c));
+    m.position.set(x, y, z); g.add(m); return m;
+  }
+  function tree(g, x, z, y, s = 1){
+    cylIn(g, 1 * s, 1.3 * s, 7 * s, P.trunk, x, y + 3.5 * s, z, 6);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(6 * s, 10, 8), mat(P.leaf));
+    crown.position.set(x, y + 9 * s, z);
+    g.add(crown);
+  }
+
+  /* --- island base: sand + land column (height = progress) + warm waterline --- */
+  function makeIsland(r, pct, landColor){
+    const group = new THREE.Group();
+    const H = 4 + (pct / 100) * 40;
+
+    const base = new THREE.Mesh(
+      new THREE.CylinderGeometry(r, r * 1.06, 12, 8),
+      new THREE.MeshStandardMaterial({ color:P.sand, roughness:0.9 })
+    );
+    base.rotation.y = Math.PI / 8;
+    group.add(base);
+
+    const land = new THREE.Mesh(
+      new THREE.CylinderGeometry(r * 0.9, r * 0.96, H, 8),
+      new THREE.MeshStandardMaterial({ color:landColor, roughness:0.6 })
+    );
+    land.rotation.y = Math.PI / 8;
+    land.position.y = 6 + H / 2;
+    group.add(land);
+
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(r * 0.9, 1.1, 6, 24),
+      new THREE.MeshStandardMaterial({ color:P.warm, emissive:P.warm, emissiveIntensity:0.25 })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 6 + H;
+    group.add(ring);
+
+    return { group, base, land, top: 6 + H };
+  }
+
+  /* --- facilities, one builder per island, matched to the project --- */
+  function buildRamp(g, y){
+    const box = (...a) => boxIn(g, ...a);
+    const cyl = (...a) => cylIn(g, ...a);
+    // accessible ramp leading up to an entrance
+    box(30, 2, 12, P.bridge, -4, y + 2.5, 0, -0.22);
+    box(18, 12, 16, P.bld, 16, y + 6, 0);
+    box(18, 1.2, 18, P.roof, 16, y + 12.6, 0);
+    box(4, 8, 0.6, P.door, 16, y + 4, 8.3);
+    // handrails along the ramp
+    box(28, 0.8, 0.8, P.warm, -4, y + 7, -6.5, -0.22);
+    box(28, 0.8, 0.8, P.warm, -4, y + 7, 6.5, -0.22);
+    // accessibility sign on a pole
+    box(1, 12, 1, P.pole, -24, y + 6, -12);
+    box(8, 8, 1, P.blue, -24, y + 14, -12);
+    tree(g, -18, 16, y, 0.8);
+    tree(g, 16, -18, y, 0.7);
+  }
+  function buildRestroom(g, y){
+    const box = (...a) => boxIn(g, ...a);
+    const cyl = (...a) => cylIn(g, ...a);
+    // restroom block with a neutral, all-gender sign
+    box(24, 14, 18, P.bld, 0, y + 7, 0);
+    box(28, 2, 22, P.roof, 0, y + 15, 0);
+    box(5, 8, 0.6, P.door, 0, y + 4, 9.3);
+    cyl(4, 4, 1, P.blue, 0, y + 11, 9.6, 16).rotation.x = Math.PI / 2;
+    box(1, 9, 1, P.pole, 16, y + 4.5, 12);
+    box(3, 4, 0.5, P.warm, 16, y + 9, 12.6);
+    tree(g, -20, 14, y, 0.8);
+    tree(g, 20, -12, y, 0.7);
+  }
+  function buildTrack(g, y){
+    const box = (...a) => boxIn(g, ...a);
+    const cyl = (...a) => cylIn(g, ...a);
+    // oval track with a grass field inside, goal posts, and bleachers
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(22, 3.5, 8, 48), mat(P.track));
+    ring.rotation.x = Math.PI / 2;
+    ring.scale.set(1, 0.6, 1);
+    ring.position.y = y + 1.5;
+    g.add(ring);
+    box(34, 0.8, 12, P.grass, 0, y + 0.4, 0);
+    // goal posts at each end of the field
+    [-16, 16].forEach(x => {
+      box(1, 9, 1, P.pole, x, y + 5, 0);
+      box(1, 1, 8, P.pole, x, y + 9.5, 0);
+    });
+    // bleachers on the outside, stepped
+    for (let s = 0; s < 3; s++){
+      box(22, 2, 4, P.bld, 0, y + 1 + s * 2, 22 + (2 - s) * 4 * 0.9 - 6);
+    }
+    tree(g, -26, -14, y, 0.7);
+    tree(g, 26, 10, y, 0.8);
+  }
+  function buildPlay(g, y){
+    const box = (...a) => boxIn(g, ...a);
+    const cyl = (...a) => cylIn(g, ...a);
+    // climbing dome, slide, swing frame, seesaw
+    const dome = new THREE.Mesh(
+      new THREE.SphereGeometry(8, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(P.play)
+    );
+    dome.position.set(-8, y, -4);
+    g.add(dome);
+    box(15, 1.2, 4, P.play, 8, y + 6, 6, 0.5);
+    box(1.2, 11, 1.2, P.pole, 14, y + 5.5, 6);
+    // swing frame
+    box(22, 1.2, 1.2, P.pole, 6, y + 12, -18);
+    box(1.2, 12, 1.2, P.pole, -5, y + 6, -18);
+    box(1.2, 12, 1.2, P.pole, 17, y + 6, -18);
+    box(5, 0.8, 2, P.warm, 2, y + 6, -18);
+    box(5, 0.8, 2, P.warm, 10, y + 6, -18);
+    // seesaw
+    box(12, 1, 2.5, P.warm, -6, y + 3, 14, 0.25);
+    cyl(2, 2.2, 3, P.pole, -6, y + 1.5, 14, 4);
+    tree(g, -18, -14, y, 0.8);
+    tree(g, 20, 6, y, 0.7);
+  }
+  const builders = { ramp:buildRamp, restroom:buildRestroom, track:buildTrack, play:buildPlay };
+
+  // hub island with a headquarters building, flagpole and trees
+  const hubIsle = makeIsland(hub.r, hub.pct, P.hub);
+  hubIsle.group.position.set(hub.pos[0], 0, hub.pos[1]);
+  const hy = hubIsle.top;
+  boxIn(hubIsle.group, 26, 22, 22, P.bld, 0, hy + 11, 0);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(18, 10, 4), mat(P.warm));
+  roof.rotation.y = Math.PI / 4;
+  roof.position.set(0, hy + 27, 0);
+  hubIsle.group.add(roof);
+  boxIn(hubIsle.group, 0.8, 20, 0.8, P.pole, -20, hy + 10, -16);
+  boxIn(hubIsle.group, 7, 4, 0.3, P.warm, -16, hy + 18, -16);
+  tree(hubIsle.group, -26, 6, hy, 1);
+  tree(hubIsle.group, 26, -6, hy, 0.9);
+  tree(hubIsle.group, 12, 30, hy, 0.8);
+  hubIsle.base.userData.index = -1;
+  hubIsle.land.userData.index = -1;
+  scene.add(hubIsle.group);
+
+  // four satellite islands with their facilities, plus bridges to the hub
+  const isles = projects.map((p, i) => {
+    const o = makeIsland(p.r, p.pct, P.land);
+    o.group.position.set(p.pos[0], 0, p.pos[1]);
+    o.base.userData.index = i;
+    o.land.userData.index = i;
+    builders[p.kind](o.group, o.top);
+    scene.add(o.group);
+
+    // bridge from hub edge to island edge
+    const dx = p.pos[0] - hub.pos[0], dz = p.pos[1] - hub.pos[1];
+    const dist = Math.hypot(dx, dz);
+    const ux = dx / dist, uz = dz / dist;
+    const start = hub.r * 0.9, end = dist - p.r * 0.9;
+    const len = end - start;
+    const bridge = new THREE.Mesh(
+      new THREE.BoxGeometry(len, 3, 12),
+      new THREE.MeshStandardMaterial({ color:P.bridge, roughness:0.8 })
+    );
+    const mx = hub.pos[0] + ux * (start + len / 2);
+    const mz = hub.pos[1] + uz * (start + len / 2);
+    bridge.position.set(mx, 5, mz);
+    bridge.rotation.y = -Math.atan2(dz, dx);
+    scene.add(bridge);
+
+    const tag = document.createElement("div");
+    tag.className = "tag";
+    tag.innerHTML = `${p.short} <b>${p.pct.toFixed(1)}%</b>`;
+    labelsEl.appendChild(tag);
+
+    return { o, tag, x:p.pos[0], z:p.pos[1], top:o.top };
+  });
+
+  const hubTag = document.createElement("div");
+  hubTag.className = "tag hub";
+  hubTag.innerHTML = `總務處 <b>${hub.pct.toFixed(1)}%</b>`;
+  labelsEl.appendChild(hubTag);
+
+  function resize(){
+    const w = stage.clientWidth, h = stage.clientHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    sph.r = w / h < 1 ? 720 : 520;
+    sph.rTarget = sph.r;
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  // interaction: drag to orbit, wheel to zoom, click to select
+  const canvas = renderer.domElement;
+  const ray = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  let down = null, dragging = false;
+
+  const modeBtn = document.getElementById("modeBtn");
+  let panMode = false;
+  modeBtn.addEventListener("click", () => {
+    panMode = !panMode;
+    modeBtn.setAttribute("aria-pressed", String(panMode));
+    modeBtn.textContent = panMode ? "平移中（點此切回旋轉）" : "平移模式";
+    canvas.style.cursor = panMode ? "move" : "";
+  });
+  canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+  const PAN_LIMIT = 350;
+  canvas.addEventListener("pointerdown", e => {
+    const pan = panMode || e.button === 2 || e.shiftKey;
+    down = { x:e.clientX, y:e.clientY, th:sph.theta, ph:sph.phi, pan, origin:desired.clone() };
+    dragging = false;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!down) return;
+    const dx = e.clientX - down.x, dy = e.clientY - down.y;
+    if (Math.hypot(dx, dy) > 5) dragging = true;
+    if (!dragging) return;
+    if (down.pan){
+      // slide the focus point across the sea, in the direction the camera is facing
+      const k = sph.r * 0.0015;
+      const th = sph.theta;
+      const right = new THREE.Vector3(Math.cos(th), 0, -Math.sin(th));
+      const fwd = new THREE.Vector3(-Math.sin(th), 0, -Math.cos(th));
+      const p = down.origin.clone().addScaledVector(right, -dx * k).addScaledVector(fwd, dy * k);
+      p.x = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, p.x));
+      p.z = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, p.z));
+      p.y = 8;
+      desired.copy(p);
+      target.copy(p);
+    } else {
+      sph.theta = down.th - dx * 0.008;
+      if (viewMode === "free") sph.phi = Math.min(1.4, Math.max(0.08, down.ph - dy * 0.005));
+    }
+  });
+  canvas.addEventListener("pointerup", e => {
+    if (down && !dragging){
+      const rect = canvas.getBoundingClientRect();
+      ndc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      ray.setFromCamera(ndc, camera);
+      const meshes = [hubIsle.base, hubIsle.land, ...isles.map(s => s.o.base), ...isles.map(s => s.o.land)];
+      const hits = ray.intersectObjects(meshes, false);
+      if (hits.length) select(hits[0].object.userData.index);
+    }
+    down = null;
+  });
+  canvas.addEventListener("wheel", e => {
+    e.preventDefault();
+    sph.r = Math.min(900, Math.max(300, sph.r + e.deltaY * 0.4));
+    sph.rTarget = sph.r;
+  }, { passive:false });
+
+  window.focusIsland = i => {
+    if (i < 0) desired.set(hub.pos[0], 8, hub.pos[1]);
+    else desired.set(projects[i].pos[0], 8, projects[i].pos[1]);
+  };
+  window.focusIsland(active);
+
+  // view presets: 自由旋轉 (free), 鳥瞰 (bird's eye), 俯視 (top-down)
+  let viewMode = "free";
+  const viewButtons = [...document.querySelectorAll(".vbtn")];
+  function setView(m){
+    viewMode = m;
+    viewButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.view === m)));
+    const base = stage.clientWidth / stage.clientHeight < 1 ? 720 : 520;
+    if (m === "top") sph.rTarget = base + 60;
+    if (m === "bird") sph.rTarget = base - 80;
+  }
+  viewButtons.forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+
+  const seaPos = seaGeo.attributes.position;
+  const v = new THREE.Vector3();
+
+  function frame(now){
+    const t = now * 0.001;
+
+    const amp = reduceMotion ? 0.8 : 2.2;
+    for (let i = 0; i < seaPos.count; i++){
+      const x = seaPos.getX(i), y = seaPos.getY(i);
+      seaPos.setZ(i, Math.sin(x * 0.016 + t * 0.9) * amp + Math.cos(y * 0.02 + t * 0.7) * amp);
+    }
+    seaPos.needsUpdate = true;
+
+    if (viewMode !== "free"){
+      const goal = viewMode === "top" ? 0.08 : 0.7;
+      sph.phi += (goal - sph.phi) * 0.08;
+      sph.r += (sph.rTarget - sph.r) * 0.08;
+    }
+    target.lerp(desired, 0.08);
+    camera.position.set(
+      target.x + sph.r * Math.sin(sph.phi) * Math.sin(sph.theta),
+      target.y + sph.r * Math.cos(sph.phi),
+      target.z + sph.r * Math.sin(sph.phi) * Math.cos(sph.theta)
+    );
+    camera.lookAt(target);
+
+    // gentle bob on the selected island
+    const bob = reduceMotion ? 0 : Math.sin(t * 2) * 1.2;
+    hubIsle.group.position.y = active < 0 ? bob : 0;
+    isles.forEach((s, i) => { s.o.group.position.y = i === active ? bob : 0; });
+
+    // labels follow the islands on screen
+    const placeTag = (tag, x, y, z, on) => {
+      v.set(x, y, z).project(camera);
+      tag.style.display = v.z < 1 ? "" : "none";
+      tag.style.left = ((v.x + 1) / 2 * stage.clientWidth) + "px";
+      tag.style.top = ((-v.y + 1) / 2 * stage.clientHeight) + "px";
+      tag.classList.toggle("on", on);
+    };
+    placeTag(hubTag, hub.pos[0], hubIsle.top + hubIsle.group.position.y + 40, hub.pos[1], active < 0);
+    isles.forEach((s, i) => {
+      placeTag(s.tag, s.x, s.top + s.o.group.position.y + 16, s.z, i === active);
+    });
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+</script>
