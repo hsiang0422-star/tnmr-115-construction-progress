@@ -90,6 +90,23 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
 }
 .vbtn[aria-pressed="true"]{border-color:var(--warm);box-shadow:0 0 0 2px var(--warm) inset}
 .vbtn:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.gantt-scroll{grid-column:1 / -1;min-width:0}
+.gantt{min-width:0}
+.g-row{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.g-row.head{border-bottom:0;padding:0 0 4px}
+.g-label{font-size:13px;min-width:0;overflow-wrap:anywhere}
+.g-label small{display:block;color:var(--muted);font-size:12px}
+.g-track{position:relative;height:22px;border-radius:6px;background:var(--sand);margin-top:2px}
+.g-axis{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.g-plan{position:absolute;left:0;top:4px;height:5px;border-radius:3px;background:var(--line)}
+.g-act{position:absolute;top:10px;height:8px;border-radius:4px;background:var(--land)}
+.g-act.doing{background:var(--warm)}
+.g-act.stop{background:#9ca3af}
+.g-today{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--warm);opacity:.85}
+.g-phase{font-weight:700;color:var(--land);font-size:13px;margin-top:12px}
+.g-legend{font-size:12px;color:var(--muted);margin-top:12px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.g-legend i{display:inline-block;width:16px;height:6px;border-radius:3px;vertical-align:middle;margin-right:4px}
+.g-note{font-size:12px;color:var(--muted);margin:10px 0 0}
 .hint{
   position:absolute; left:12px; bottom:10px; font-size:12px; color:var(--muted);
   background:var(--card); padding:4px 10px; border-radius:99px; opacity:.92;
@@ -212,6 +229,141 @@ const projects = [
     pos:[-150,110], r:50 }
 ];
 
+const TASKS = [
+  /* 0 無障礙斜坡道 */ [
+    ["一 預算及計畫","計畫預算核定","需求單位、主計室","2026-01-01","2026-01-31","2026-03-26","2026-04-28","done"],
+    ["二 設計發包","招標公告","事務組",null,null,null,null,"na"],
+    ["二 設計發包","開標","事務組",null,null,null,null,"na"],
+    ["二 設計發包","議價","事務組、主計室、廠商","2026-05-06","2026-05-06","2026-05-06","2026-05-06","done"],
+    ["二 設計發包","決標","事務組、主計室、得標廠商","2026-05-06","2026-05-06","2026-05-06","2026-05-06","stop"],
+    ["三 設計階段","圖說送審","事務組","2026-05-07","2026-05-20","2026-05-07","2026-05-20","done"],
+    ["三 設計階段","圖說審查","事務組","2026-05-21","2026-05-31","2026-05-21","2026-06-25","done"],
+    ["三 設計階段","圖說修正","事務組","2026-05-22","2026-06-01","2026-05-22","2026-06-25","done"],
+    ["四 工程發包","招標文件製作","請購單位、事務組、校長","2026-06-29","2026-06-29","2026-06-29","2026-07-01","done"],
+    ["四 工程發包","招標公告","事務組","2026-07-02","2026-07-20","2026-07-02","2026-07-20","done"],
+    ["四 工程發包","開標","需求單位、事務組、主計室、廠商","2026-07-21","2026-07-21","2026-07-21","2026-08-12","stop"],
+    ["四 工程發包","決標","需求單位、事務組、主計室、廠商",null,null,null,null,"stop"],
+    ["五 變更設計","函文請建築師變更設計為RC","事務組、主計室","2026-08-20","2026-08-20","2026-09-01","2026-09-02","doing"],
+    ["五 變更設計","提送基本設計","事務組","2026-09-02","2026-10-01","2026-09-02",null,"doing"],
+    ["五 變更設計","提送細部設計","事務組","2026-10-02","2026-11-01",null,null,"todo"],
+    ["五 變更設計","申請建照","事務組","2026-11-02","2026-12-31",null,null,"todo"],
+    ["六 變更後發包","招標文件製作","請購單位、事務組","2026-12-21","2026-12-21",null,null,"todo"],
+    ["六 變更後發包","招標公告","事務組","2026-12-29","2027-01-11",null,null,"todo"],
+    ["六 變更後發包","開標","需求單位、事務組、主計室、廠商","2027-01-12","2027-01-12",null,null,"todo"],
+    ["六 變更後發包","決標","需求單位、事務組、主計室、得標廠商","2027-01-12","2027-01-12",null,null,"todo"],
+    ["六 合約履約","廠商提送三書","監造、得標廠商、事務組","2027-01-13","2027-01-19",null,null,"todo"],
+    ["六 合約履約","開工","監造單位、得標廠商、事務組","2027-01-21","2027-07-20",null,null,"todo"],
+    ["六 合約履約","竣工確認","監造單位、得標廠商、事務組","2027-07-21","2027-07-26",null,null,"todo"],
+    ["六 驗收與付款","驗收","請購單位、事務組","2027-07-28","2027-07-30",null,null,"todo"],
+    ["六 驗收與付款","付款作業","事務組、主計室","2027-08-01","2027-08-12",null,null,"todo"]
+  ],
+  /* 1 性別友善廁所 */ [
+    ["一 預算及計畫","計畫預算核定","需求單位、主計室","2025-12-01","2025-12-31","2025-12-23","2025-12-23","done"],
+    ["二 設計發包","招標公告","事務組",null,null,null,null,"na"],
+    ["二 設計發包","開標","事務組",null,null,null,null,"na"],
+    ["二 設計發包","評審會議","事務組",null,null,null,null,"na"],
+    ["二 設計發包","簽約","事務組","2026-01-02","2026-01-15","2026-01-02","2026-04-01","done"],
+    ["三 設計階段","圖說送審","事務組","2026-04-02","2026-05-01","2026-04-02","2026-05-01","done"],
+    ["三 設計階段","圖說審查","事務組、主計室","2026-05-12","2026-05-31","2026-05-15","2026-06-25","done"],
+    ["三 設計階段","圖說修正","事務組","2026-06-01","2026-06-11","2026-06-26","2026-07-07","done"],
+    ["四 工程發包","招標文件製作","請購單位、事務組","2026-06-12","2026-06-15","2026-07-09","2026-07-14","done"],
+    ["四 工程發包","招標公告","事務組","2026-06-16","2026-06-22","2026-07-16","2026-07-21","done"],
+    ["四 工程發包","開標","需求單位、事務組、主計室、廠商","2026-06-23","2026-06-23","2026-07-22","2026-07-22","done"],
+    ["四 工程發包","決標","需求單位、事務組、主計室、得標廠商","2026-07-22","2026-07-22","2026-09-01","2026-09-01","done"],
+    ["五 合約履約","廠商提送三書","監造、得標廠商、事務組","2026-07-22","2026-07-31","2026-07-31","2026-07-31","done"],
+    ["五 合約履約","開工","監造單位、得標廠商、事務組","2026-08-01","2026-09-28","2026-08-01",null,"doing"],
+    ["五 合約履約","竣工確認","監造單位、得標廠商、事務組","2026-09-29","2026-10-05",null,null,"todo"],
+    ["六 驗收與付款","驗收","需求單位、事務組","2026-10-08","2026-10-08",null,null,"todo"],
+    ["六 驗收與付款","付款作業","事務組、主計室","2026-10-09","2026-10-27",null,null,"todo"]
+  ],
+  /* 2 跑道改建 */ [
+    ["一 預算及計畫","計畫預算核定","需求單位、主計室","2026-01-01","2026-01-31","2026-05-15","2026-05-15","done"],
+    ["二 設計發包","招標公告","需求單位、事務組","2026-06-05","2026-06-10","2026-06-05","2026-06-10","done"],
+    ["二 設計發包","開標","事務組","2026-06-11","2026-06-11","2026-06-11","2026-06-11","done"],
+    ["二 設計發包","評審會議","需求單位、事務組、廠商","2026-06-12","2026-06-12","2026-06-12","2026-06-12","done"],
+    ["二 設計發包","決標","需求單位、事務組、主計室、得標廠商","2026-06-12","2026-06-12","2026-06-12","2026-06-12","done"],
+    ["三 設計階段","圖說送審","事務組","2026-06-15","2026-07-14","2026-06-15","2026-07-10","done"],
+    ["三 設計階段","圖說審查","事務組、主計室","2026-08-20","2026-08-20","2026-08-20","2026-08-20","done"],
+    ["三 設計階段","圖說修正","事務組","2026-08-21","2026-09-03","2026-08-21","2026-09-04","done"],
+    ["四 工程發包","招標文件製作","需求單位、事務組","2026-09-07","2026-09-07","2026-09-07","2026-09-07","done"],
+    ["四 工程發包","招標公告","事務組","2026-09-09","2026-09-21","2026-09-14","2026-09-14","done"],
+    ["四 工程發包","開標","需求單位、事務組、主計室、廠商","2026-09-22","2026-09-22","2026-09-22","2026-09-29","doing"],
+    ["四 工程發包","決標","需求單位、事務組、主計室、得標廠商","2026-09-22","2026-09-22",null,null,"todo"],
+    ["五 合約履約","廠商提送三書","監造、得標廠商、事務組","2026-09-23","2026-09-29",null,null,"todo"],
+    ["五 合約履約","開工","監造單位、得標廠商、事務組","2027-01-01","2027-03-01",null,null,"todo"],
+    ["五 合約履約","竣工確認","監造單位、得標廠商、事務組","2027-03-02","2027-03-08",null,null,"todo"],
+    ["六 驗收與付款","驗收","請購單位、事務組","2027-03-10","2027-03-10",null,null,"todo"],
+    ["六 驗收與付款","付款作業","事務組、主計室","2027-03-11","2027-03-24",null,null,"todo"]
+  ],
+  /* 3 共融遊具 */ [
+    ["一 預算及計畫","計畫預算核定","需求單位、主計室","2025-12-01","2025-12-31","2025-12-23","2025-12-23","done"],
+    ["二 設計發包","招標公告","事務組",null,null,null,null,"na"],
+    ["二 設計發包","開標","事務組",null,null,null,null,"na"],
+    ["二 設計發包","評審會議","事務組",null,null,null,null,"na"],
+    ["二 設計發包","簽約","事務組","2026-01-02","2026-01-15","2026-01-02","2026-03-16","done"],
+    ["三 設計階段","圖說送審","事務組","2026-04-02","2026-05-01","2026-04-02","2026-05-01","done"],
+    ["三 設計階段","圖說審查","需求單位、事務組","2026-05-12","2026-05-31","2026-06-10","2026-06-10","done"],
+    ["三 設計階段","圖說修正","事務組","2026-06-01","2026-06-15","2026-06-11","2026-06-25","done"],
+    ["四 工程發包","招標文件製作","需求單位、事務組","2026-06-12","2026-06-15","2026-07-02","2026-07-02","done"],
+    ["四 工程發包","招標公告","事務組","2026-06-16","2026-06-22","2026-07-06","2026-07-17","done"],
+    ["四 工程發包","開標","需求單位、事務組、主計室、廠商","2026-06-23","2026-06-23","2026-07-20","2026-07-28","done"],
+    ["四 工程發包","決標","需求單位、事務組、主計室、得標廠商","2026-07-22","2026-07-22","2026-07-29","2026-07-29","done"],
+    ["五 合約履約","廠商提送三書","監造單位、得標廠商、事務組","2026-07-29","2026-08-10","2026-07-29","2026-08-07","done"],
+    ["五 合約履約","開工","監造單位、得標廠商、事務組","2026-08-11","2026-10-08","2026-08-17","2026-10-30","doing"],
+    ["五 合約履約","竣工確認","監造單位、得標廠商、事務組","2026-10-09","2026-10-15",null,null,"todo"],
+    ["六 驗收與付款","驗收","請購單位、事務組","2026-10-16","2026-10-16",null,null,"todo"],
+    ["六 驗收與付款","付款作業","事務組、主計室","2026-10-19","2026-10-30",null,null,"todo"]
+  ]
+];
+
+// Gantt chart for one project: each task on a shared timeline, plan (thin) vs actual (bar)
+const STATUS_LABEL = { done:"已完成", doing:"進行中", stop:"流標", todo:"未開始", na:"不適用" };
+function fmtDate(ms){
+  const d = new Date(ms);
+  return d.getUTCFullYear() + "/" + String(d.getUTCMonth() + 1).padStart(2, "0") + "/" + String(d.getUTCDate()).padStart(2, "0");
+}
+function ganttHTML(idx){
+  if (idx < 0) return "";
+  const list = TASKS[idx];
+  const ms = d => Date.parse(d + "T00:00:00Z");
+  const dates = list.flatMap(t => [t[3], t[4], t[5], t[6]]).filter(Boolean).map(ms);
+  if (!dates.length) return "";
+  const T0 = Math.min(...dates), T1 = Math.max(...dates, ms(TODAY));
+  const pos = d => ((ms(d) - T0) / (T1 - T0)) * 100;
+  const todayLeft = ((ms(TODAY) - T0) / (T1 - T0)) * 100;
+  let html = `<div class="gantt">
+    <div class="g-row head"><div></div><div class="g-axis"><span>${fmtDate(T0)}</span><span>${fmtDate(T1)}</span></div></div>`;
+  let lastPhase = "";
+  list.forEach(([phase, name, owner, ps, pe, as, ae, st]) => {
+    if (phase !== lastPhase){ html += `<div class="g-phase">${phase}</div>`; lastPhase = phase; }
+    let bars = "";
+    if (ps && pe){
+      const l = pos(ps), w = Math.max(0.8, pos(pe) - l);
+      bars += `<div class="g-plan" style="left:${l}%;width:${w}%"></div>`;
+    }
+    if (as){
+      const l = pos(as), end = ae || TODAY, w = Math.max(0.8, pos(end) - l);
+      const cls = st === "doing" ? "doing" : st === "stop" ? "stop" : "";
+      bars += `<div class="g-act ${cls}" style="left:${l}%;width:${w}%"></div>`;
+    }
+    const plan = ps ? `${ps.replace(/-/g, "/")}～${pe.replace(/-/g, "/")}` : "";
+    const actual = as ? `　實際 ${as.replace(/-/g, "/")}${ae ? "～" + ae.replace(/-/g, "/") : "～"}` : "";
+    html += `<div class="g-row">
+      <div class="g-label">${name}<small>${owner}・${STATUS_LABEL[st]}</small><small>${plan}${actual}</small></div>
+      <div class="g-track">${bars}<div class="g-today" style="left:${todayLeft}%"></div></div>
+    </div>`;
+  });
+  const legend = `<div class="g-legend">
+      <span><i style="background:var(--line)"></i>預定</span>
+      <span><i style="background:var(--land)"></i>實際（已完成）</span>
+      <span><i style="background:var(--warm)"></i>實際（進行中）</span>
+      <span><i style="background:#9ca3af"></i>流標</span>
+      <span><i style="background:var(--warm);width:2px;height:12px"></i>今日 ${TODAY.replace(/-/g, "/")}</span>
+    </div>
+    <p class="g-note">資料依試算表「(1150907修)」工作表整理，為匯出時的快照；未經同步，請以原始試算表為準。</p>`;
+  return legend + html + "</div>";
+}
+
 let active = -1;  // index into projects; -1 means the hub (camera starts centered on 總務處)
 const detail = document.getElementById("detail");
 const stage = document.getElementById("stage");
@@ -256,6 +408,10 @@ function renderDetail(){
     <div>
       <h3 style="margin:0 0 10px;font-size:16px">關鍵節點</h3>
       <ol class="timeline">${items}</ol>
+    </div>
+    <div class="gantt-scroll">
+      <h3 style="margin:14px 0 4px;font-size:16px">甘特進度圖（各階段任務）</h3>
+      ${ganttHTML(active)}
     </div>`;
 }
 function select(i){ openSheet(i); }
@@ -299,6 +455,7 @@ function init3D(){
         bridge:0xc9b07a, bld:0xffffff, pole:0x8fa3b0, blue:0x2f6fb0, roof:0x9c5b3c, door:0x5b4636,
         grass:0x6fb36a, leaf:0x4f9a5a, trunk:0x7a5230, play:0xf2c14e, track:0xd9825b };
 
+  const ASPHALT = dark ? 0x4b5563 : 0x8b96a3;
   const renderer = new THREE.WebGLRenderer({ antialias:true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   stage.prepend(renderer.domElement);
@@ -314,6 +471,7 @@ function init3D(){
 
   const ambient = new THREE.AmbientLight(0xffffff, 0.65);
   scene.add(ambient);
+  const allLamps = [];
   const sun = new THREE.DirectionalLight(0xffffff, 0.85);
   sun.position.set(200, 400, 150);
   scene.add(sun);
@@ -356,27 +514,114 @@ function init3D(){
     sun.position.set(...S.sunPos);
     ambient.intensity = S.amb;
     stars.visible = name === "night";
+    allLamps.forEach(l => { l.bulbMat.emissiveIntensity = name === "night" ? 1.6 : 0; l.glowMat.opacity = name === "night" ? 0.9 : 0; });
     skyButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sky === name)));
   }
   skyButtons.forEach(b => b.addEventListener("click", () => applySky(b.dataset.sky)));
   applySky("day");
 
-  /* --- small helpers for props --- */
+  /* --- small helpers for props (decorations are drawn SZ times larger) --- */
+  const SZ = 1.45;
+  let CUR_TOP = 0;
+  const Y = y => CUR_TOP + (y - CUR_TOP) * SZ;
   const mat = c => new THREE.MeshStandardMaterial({ color:c, roughness:0.7 });
-  function boxIn(g, w, h, d, c, x, y, z, rz = 0, ry = 0){
+  function boxRaw(g, w, h, d, c, x, y, z, rz = 0, ry = 0){
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
     m.position.set(x, y, z); m.rotation.set(0, ry, rz);
     g.add(m); return m;
   }
-  function cylIn(g, rt, rb, h, c, x, y, z, seg = 10){
+  function cylRaw(g, rt, rb, h, c, x, y, z, seg = 10){
     const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat(c));
     m.position.set(x, y, z); g.add(m); return m;
   }
+  function boxIn(g, w, h, d, c, x, y, z, rz = 0, ry = 0){
+    return boxRaw(g, w * SZ, h * SZ, d * SZ, c, x * SZ, Y(y), z * SZ, rz, ry);
+  }
+  function cylIn(g, rt, rb, h, c, x, y, z, seg = 10){
+    return cylRaw(g, rt * SZ, rb * SZ, h * SZ, c, x * SZ, Y(y), z * SZ, seg);
+  }
   function tree(g, x, z, y, s = 1){
     cylIn(g, 1 * s, 1.3 * s, 7 * s, P.trunk, x, y + 3.5 * s, z, 6);
-    const crown = new THREE.Mesh(new THREE.SphereGeometry(6 * s, 10, 8), mat(P.leaf));
-    crown.position.set(x, y + 9 * s, z);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(6 * s * SZ, 10, 8), mat(P.leaf));
+    crown.position.set(x * SZ, Y(y + 9 * s), z * SZ);
     g.add(crown);
+  }
+  // soft glow sprite for the street lamps
+  const glowCanvas = document.createElement("canvas");
+  glowCanvas.width = glowCanvas.height = 64;
+  const gctx = glowCanvas.getContext("2d");
+  const grad = gctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grad.addColorStop(0, "rgba(255,236,170,1)");
+  grad.addColorStop(0.35, "rgba(255,206,120,0.45)");
+  grad.addColorStop(1, "rgba(255,206,120,0)");
+  gctx.fillStyle = grad;
+  gctx.fillRect(0, 0, 64, 64);
+  const glowTex = new THREE.CanvasTexture(glowCanvas);
+  function addLamp(g, x, z, top, lamps){
+    cylIn(g, 0.4, 0.5, 11, P.pole, x, top + 5.5, z, 6);
+    const bulbMat = new THREE.MeshStandardMaterial({ color:0xfff3c4, emissive:0xffd77a, emissiveIntensity:0 });
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(1.4 * SZ, 8, 6), bulbMat);
+    bulb.position.set(x * SZ, Y(top + 11.2), z * SZ);
+    g.add(bulb);
+    const glowMat = new THREE.SpriteMaterial({ map:glowTex, color:0xffd77a, blending:THREE.AdditiveBlending, transparent:true, opacity:0, depthWrite:false });
+    const glow = new THREE.Sprite(glowMat);
+    glow.scale.set(14 * SZ, 14 * SZ, 1);
+    glow.position.set(x * SZ, Y(top + 11.2), z * SZ);
+    g.add(glow);
+    lamps.push({ bulbMat, glowMat });
+  }
+
+  /* --- scenery: flowers, grass, benches, trees, cars --- */
+  function rng(seed){ let s = seed * 9301 + 49297; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
+  function clampIn(x, z, lim){ const d = Math.hypot(x, z); const k = d > lim ? lim / d : 1; return [x * k, z * k]; }
+  function flower(g, x, z, y, c){
+    cylIn(g, 0.3, 0.3, 3.5, P.leaf, x, y + 1.75, z, 4);
+    const f = new THREE.Mesh(new THREE.SphereGeometry(1.8 * SZ, 8, 6), mat(c));
+    f.position.set(x * SZ, Y(y + 3.9), z * SZ); g.add(f);
+  }
+  function grassTuft(g, x, z, y){
+    const m = new THREE.Mesh(new THREE.ConeGeometry(1.8 * SZ, 4 * SZ, 5), mat(P.grass));
+    m.position.set(x * SZ, Y(y + 2), z * SZ); g.add(m);
+  }
+  function bench(g, x, z, y, ry){
+    boxIn(g, 6, 0.8, 2, P.roof, x, y + 2.4, z, 0, ry);
+    boxIn(g, 0.6, 2.4, 2, P.pole, x - 2.4 * Math.cos(ry), y + 1.2, z + 2.4 * Math.sin(ry), 0, ry);
+    boxIn(g, 0.6, 2.4, 2, P.pole, x + 2.4 * Math.cos(ry), y + 1.2, z - 2.4 * Math.sin(ry), 0, ry);
+  }
+  function makeCar(color){
+    const c = new THREE.Group();
+    boxRaw(c, 6, 2.2, 3.2, color, 0, 0, 0);
+    boxRaw(c, 3.2, 1.8, 2.8, 0xdbeafe, -0.3, 2, 0);
+    return c;
+  }
+  function scatterDecor(g, R, top, seed, lamps){
+    const rnd = rng(seed * 31 + 7);
+    const palette = [0xf472b6, 0xfacc15, 0xffffff, 0xa78bfa, 0xfb923c];
+    for (let k = 0; k < 5; k++){
+      const a = k * (Math.PI * 2 / 5) + rnd() * 0.6;
+      const d = R * (0.4 + rnd() * 0.1);
+      tree(g, Math.cos(a) * d, Math.sin(a) * d, top, 0.6 + rnd() * 0.4);
+    }
+    for (let c = 0; c < 4; c++){
+      const [cx, cz] = clampIn((rnd() - 0.5) * R * 1.0, (rnd() - 0.5) * R * 1.0, R * 0.5);
+      for (let j = 0; j < 6; j++){
+        const [x, z] = clampIn(cx + (rnd() - 0.5) * 9, cz + (rnd() - 0.5) * 9, R * 0.6);
+        flower(g, x, z, top, palette[Math.floor(rnd() * palette.length)]);
+      }
+    }
+    for (let j = 0; j < 14; j++){
+      const [x, z] = clampIn((rnd() - 0.5) * R * 1.2, (rnd() - 0.5) * R * 1.2, R * 0.62);
+      grassTuft(g, x, z, top);
+    }
+    for (let b = 0; b < 2; b++){
+      const a = rnd() * Math.PI * 2;
+      bench(g, Math.cos(a) * R * 0.4, Math.sin(a) * R * 0.4, top, a);
+    }
+    // four street lamps around each island
+    for (let k = 0; k < 4; k++){
+      const a = k * Math.PI / 2 + 0.4;
+      addLamp(g, Math.cos(a) * R * 0.55, Math.sin(a) * R * 0.55, top, lamps);
+    }
   }
 
   /* --- island base: sand + land column (height = progress) + warm waterline --- */
@@ -492,27 +737,48 @@ function init3D(){
   const hubIsle = makeIsland(hub.r, hub.pct, P.hub);
   hubIsle.group.position.set(hub.pos[0], 0, hub.pos[1]);
   const hy = hubIsle.top;
+  CUR_TOP = hy;
   boxIn(hubIsle.group, 26, 22, 22, P.bld, 0, hy + 11, 0);
   const roof = new THREE.Mesh(new THREE.ConeGeometry(18, 10, 4), mat(P.warm));
   roof.rotation.y = Math.PI / 4;
-  roof.position.set(0, hy + 27, 0);
+  roof.scale.setScalar(SZ);
+  roof.position.set(0, Y(hy + 27), 0);
   hubIsle.group.add(roof);
   boxIn(hubIsle.group, 0.8, 20, 0.8, P.pole, -20, hy + 10, -16);
   boxIn(hubIsle.group, 7, 4, 0.3, P.warm, -16, hy + 18, -16);
   tree(hubIsle.group, -26, 6, hy, 1);
   tree(hubIsle.group, 26, -6, hy, 0.9);
   tree(hubIsle.group, 12, 30, hy, 0.8);
+  scatterDecor(hubIsle.group, hub.r, hy, 0, allLamps);
+  boxIn(hubIsle.group, 20, 12, 14, P.bld, -20, hy + 6, -14);
+  boxIn(hubIsle.group, 22, 1.5, 16, P.roof, -20, hy + 12.7, -14);
+  boxIn(hubIsle.group, 26, 0.8, 14, ASPHALT, 20, hy + 0.4, 14);
+  [[14, 0xef4444], [20, 0x10b981], [26, 0xf8fafc]].forEach(([x, col]) => {
+    const pc = makeCar(col);
+    pc.scale.setScalar(SZ);
+    pc.position.set(x * SZ, hy + 1.9 * SZ, 14 * SZ);
+    hubIsle.group.add(pc);
+  });
+  for (let k = 0; k < 6; k++){
+    const a = k * Math.PI / 3 + 0.2;
+    addLamp(hubIsle.group, Math.cos(a) * 36, Math.sin(a) * 36, hy, allLamps);
+  }
+  bench(hubIsle.group, -12, 40, hy, 0);
+  bench(hubIsle.group, 12, 40, hy, 0);
   hubIsle.base.userData.index = -1;
   hubIsle.land.userData.index = -1;
   scene.add(hubIsle.group);
 
+  const bridges = [];
   // four satellite islands with their facilities, plus bridges to the hub
   const isles = projects.map((p, i) => {
     const o = makeIsland(p.r, p.pct, P.land);
     o.group.position.set(p.pos[0], 0, p.pos[1]);
     o.base.userData.index = i;
     o.land.userData.index = i;
+    CUR_TOP = o.top;
     builders[p.kind](o.group, o.top);
+    scatterDecor(o.group, p.r, o.top, i + 1, allLamps);
     scene.add(o.group);
 
     // bridge from hub edge to island edge
@@ -530,6 +796,10 @@ function init3D(){
     bridge.position.set(mx, 5, mz);
     bridge.rotation.y = -Math.atan2(dz, dx);
     scene.add(bridge);
+    bridges.push({
+      ax: hub.pos[0] + ux * start, az: hub.pos[1] + uz * start,
+      bx: hub.pos[0] + ux * end,   bz: hub.pos[1] + uz * end
+    });
 
     const tag = document.createElement("div");
     tag.className = "tag";
@@ -537,6 +807,16 @@ function init3D(){
     labelsEl.appendChild(tag);
 
     return { o, tag, x:p.pos[0], z:p.pos[1], top:o.top };
+  });
+
+  const movers = [];
+  bridges.forEach(br => {
+    [[0, 1, 0x3b82f6], [0.5, -1, 0xf59e0b]].forEach(([s0, dir, col]) => {
+      const car = makeCar(col);
+      car.scale.setScalar(1.5);
+      scene.add(car);
+      movers.push({ car, br, s0, dir, speed:0.05 });
+    });
   });
 
   const hubTag = document.createElement("div");
@@ -678,6 +958,14 @@ function init3D(){
     placeTag(hubTag, hub.pos[0], hubIsle.top + hubIsle.group.position.y + 40, hub.pos[1], active < 0);
     isles.forEach((s, i) => {
       placeTag(s.tag, s.x, s.top + s.o.group.position.y + 16, s.z, i === active);
+    });
+
+    movers.forEach(m => {
+      const s = (((m.s0 + t * m.speed) % 1) + 1) % 1;
+      const u = m.dir > 0 ? s : 1 - s;
+      const b = m.br;
+      m.car.position.set(b.ax + (b.bx - b.ax) * u, 8.15, b.az + (b.bz - b.az) * u);
+      m.car.rotation.y = Math.atan2(-(b.bz - b.az) * m.dir, (b.bx - b.ax) * m.dir);
     });
 
     renderer.render(scene, camera);
