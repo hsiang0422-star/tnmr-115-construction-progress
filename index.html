@@ -90,6 +90,10 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   border:1px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-size:20px; line-height:1; cursor:pointer;
 }
 .close:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+.close{position:fixed; top:max(18px,env(safe-area-inset-top,0px)); right:18px; z-index:60}
+.sheet-foot{display:flex;justify-content:center;padding:4px 0 2px}
+.close-wide{font:inherit;font-size:15px;padding:10px 26px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.close-wide:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
 .views{position:absolute; right:12px; bottom:10px; z-index:2; display:flex; gap:6px}
 .vbtn{
   font:inherit; font-size:13px; padding:6px 12px; border-radius:99px; cursor:pointer;
@@ -205,9 +209,10 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   </div>
 
   <div class="sheet" id="sheet" hidden>
+    <button class="close" id="closeBtn" type="button" aria-label="關閉">×</button>
     <div class="sheet-box" role="dialog" aria-modal="true" aria-label="工程詳細資料">
-      <button class="close" id="closeBtn" type="button" aria-label="關閉">×</button>
       <section class="detail" id="detail"></section>
+      <div class="sheet-foot"><button class="close-wide" id="closeBtn2" type="button">關閉視窗</button></div>
     </div>
   </div>
 
@@ -444,6 +449,7 @@ function openSheet(i){
 }
 function closeSheet(){ sheet.hidden = true; }
 document.getElementById("closeBtn").addEventListener("click", closeSheet);
+document.getElementById("closeBtn2").addEventListener("click", closeSheet);
 sheet.addEventListener("click", e => { if (e.target === sheet) closeSheet(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !sheet.hidden) closeSheet(); });
 
@@ -810,18 +816,45 @@ function init3D(){
   scene.add(hubIsle.group);
 
   const bridges = [];
-  // a small flock of black-faced spoonbills (黑面琵鷺) circling the hub
-  const spoonbills = [];
-  for (let i = 0; i < 3; i++) {
+  // a small flock of black-faced spoonbills (黑面琵鷺) circling the hub:
+  // white body, long black spoon-shaped bill, black bare face, long neck and legs
+  const spoonMat = new THREE.MeshStandardMaterial({ color:0xfbfaf6, roughness:0.6 });
+  const blackMat = new THREE.MeshStandardMaterial({ color:0x15181e, roughness:0.5 });
+  function makeSpoonbill(){
     const bird = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.SphereGeometry(2.2, 12, 10),
-      new THREE.MeshStandardMaterial({ color:0xf7f3ea, roughness:0.6 }));
-    body.scale.set(1.6, 0.9, 1);
-    const beak = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.5, 0.5),
-      new THREE.MeshStandardMaterial({ color:0x1b1f27, roughness:0.5 }));
-    beak.position.set(3.4, -0.3, 0);
-    bird.add(body, beak);
-    bird.scale.setScalar(SZ);
+    const add = (geo, mat, x, y, z, rz = 0) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.rotation.z = rz;
+      bird.add(m);
+      return m;
+    };
+    add(new THREE.SphereGeometry(2.2, 14, 10), spoonMat, 0, 0, 0).scale.set(1.9, 0.95, 1.05);  // body
+    add(new THREE.CylinderGeometry(0.55, 0.7, 4.8, 8), spoonMat, 2.9, 2.6, 0, -0.45);      // long neck, leaning forward
+    add(new THREE.SphereGeometry(0.95, 10, 8), spoonMat, 4.7, 5.0, 0);                       // head
+    add(new THREE.SphereGeometry(0.55, 8, 6), blackMat, 5.4, 4.7, 0);                        // bare black face
+    add(new THREE.BoxGeometry(4.2, 0.4, 0.9), blackMat, 7.6, 4.6, 0);                         // flat bill
+    add(new THREE.BoxGeometry(1.4, 0.5, 1.8), blackMat, 9.7, 4.5, 0);                         // spatula tip
+    add(new THREE.BoxGeometry(6.5, 0.28, 0.28), blackMat, -4.6, -1.5, 0.45);                  // legs trailing back
+    add(new THREE.BoxGeometry(6.5, 0.28, 0.28), blackMat, -4.6, -1.5, -0.45);
+    // wings: pivot at the shoulders, flapped in the animation loop
+    const wings = [];
+    for (const side of [1, -1]){
+      const pivot = new THREE.Group();
+      pivot.position.set(0.4, 1.2, 0);
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.25, 6.8), spoonMat);
+      wing.position.set(-0.6, 0.2, side * 3.4);
+      pivot.add(wing);
+      bird.add(pivot);
+      wings.push({ pivot, side });
+    }
+    bird.userData.wings = wings;
+    return bird;
+  }
+  const spoonbills = [];
+  for (let i = 0; i < 3; i++){
+    const bird = makeSpoonbill();
+    bird.scale.setScalar(SZ * 0.9);
     scene.add(bird);
     spoonbills.push({ bird, off:i * 2.1, rad:82 + i * 6 });
   }
@@ -863,6 +896,31 @@ function init3D(){
     labelsEl.appendChild(tag);
 
     return { o, tag, x:p.pos[0], z:p.pos[1], top:o.top };
+  });
+
+  // Tainan heritage touches along the roads: a red-brick arch gate (安平古堡 style) and stone lanterns (石燈籠)
+  const brickMat = new THREE.MeshStandardMaterial({ color:0xb8583c, roughness:0.9 });
+  const stoneMat = new THREE.MeshStandardMaterial({ color:0xd9d2c3, roughness:0.95 });
+  bridges.forEach(br => {
+    const dx = br.bx - br.ax, dz = br.bz - br.az;
+    const road = new THREE.Group();
+    road.position.set((br.ax + br.bx) / 2, 6.5, (br.az + br.bz) / 2);
+    road.rotation.y = -Math.atan2(dz, dx);
+    scene.add(road);
+    const gate = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); road.add(m); return m; };
+    // arch gate across the road: two piers, a half-round arch and a lintel
+    gate(new THREE.BoxGeometry(3.2, 7, 3.2), brickMat, 0, 3.5, -8);
+    gate(new THREE.BoxGeometry(3.2, 7, 3.2), brickMat, 0, 3.5, 8);
+    const arch = gate(new THREE.TorusGeometry(8, 1.1, 8, 20, Math.PI), brickMat, 0, 7, 0);
+    arch.rotation.y = Math.PI / 2;
+    gate(new THREE.BoxGeometry(3.6, 1.6, 19.6), brickMat, 0, 16.6, 0);
+    // stone lanterns on both sides of the road
+    [-14, 14].forEach(x => [-7.5, 7.5].forEach(z => {
+      gate(new THREE.CylinderGeometry(1.5, 1.8, 1.4, 8), stoneMat, x, 0.7, z);      // base
+      gate(new THREE.CylinderGeometry(0.6, 0.8, 4.2, 6), stoneMat, x, 3.5, z);      // column
+      gate(new THREE.BoxGeometry(2.6, 1.6, 2.6), stoneMat, x, 6.2, z);              // lantern box
+      gate(new THREE.ConeGeometry(2.0, 1.4, 4), stoneMat, x, 7.6, z).rotation.y = Math.PI / 4; // roof
+    }));
   });
 
   const movers = [];
@@ -968,6 +1026,28 @@ function init3D(){
     sph.rTarget = newR;
     if (viewMode !== "free" && viewMode !== "orbit") setView("free");
   }, { passive:false });
+
+  // touch: pinch with two fingers to zoom the whole map
+  const touches = new Map();
+  let pinch = null;
+  const pinchGap = () => { const [a, b] = [...touches.values()]; return Math.hypot(a.x - b.x, a.y - b.y) || 1; };
+  canvas.addEventListener("pointerdown", e => {
+    touches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if (touches.size === 2){
+      pinch = { gap:pinchGap(), r:sph.rTarget };
+      down = null; dragging = true;      // a two-finger gesture is never a tap or a drag
+    }
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!touches.has(e.pointerId)) return;
+    touches.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if (pinch && touches.size === 2){
+      sph.rTarget = Math.min(1000, Math.max(160, pinch.r * (pinch.gap / pinchGap())));
+    }
+  });
+  const endTouch = e => { touches.delete(e.pointerId); if (touches.size < 2) pinch = null; };
+  canvas.addEventListener("pointerup", endTouch);
+  canvas.addEventListener("pointercancel", endTouch);
 
   // keyboard: WASD / arrows move, Q / E rotate, + / - zoom
   const keys = new Set();
@@ -1087,6 +1167,8 @@ function init3D(){
         hub.pos[1] + Math.sin(a) * sb.rad
       );
       sb.bird.rotation.y = -a - Math.PI / 2;
+      const flap = Math.sin(t * 8 + sb.off) * 0.7;   // wings beat together
+      sb.bird.userData.wings.forEach(w => { w.pivot.rotation.x = -w.side * flap; });
     });
 
     renderer.render(scene, camera);
