@@ -1,7 +1,9 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>工程追蹤3D島嶼</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js" } }
+</script>
 <style>
 :root{
   color-scheme: light;
@@ -83,14 +85,47 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   background:rgba(8,20,30,.45);
 }
 .sheet[hidden]{display:none!important}
-.sheet-box{position:relative;width:min(900px,100%);max-height:90vh;overflow:auto;border-radius:18px}
-.sheet-box .detail{margin-top:0}
+.sheet-box{position:relative;width:min(900px,100%);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.sheet-head{position:relative;flex:0 0 auto;padding:16px 64px 12px 20px;border-bottom:1px solid var(--line);background:var(--card)}
+.sheet-title{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.sheet-title h2{font-family:"Noto Serif TC",serif;font-size:20px;margin:0;text-wrap:balance}
+.sheet-title .pill{margin:0}
+.sheet-head .g-legend{margin-top:8px}
+.sheet-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.sheet-box .detail{margin:0;border:0;border-radius:0;background:transparent;padding:18px 20px}
 .close{
   position:absolute; top:12px; right:12px; z-index:1; width:36px; height:36px; border-radius:99px;
   border:1px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-size:20px; line-height:1; cursor:pointer;
 }
 .close:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
-.close{position:fixed; top:max(18px,env(safe-area-inset-top,0px)); right:18px; z-index:60}
+.sheet-head .close{position:absolute; top:12px; right:12px; z-index:2}
+.set-btn{position:absolute; top:56px; right:12px; z-index:2; font:inherit; font-size:13px; padding:7px 12px; border-radius:99px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer}
+.set-btn[aria-expanded="true"]{border-color:var(--warm); box-shadow:0 0 0 2px var(--warm) inset}
+.set-btn:focus-visible{outline:3px solid var(--warm); outline-offset:2px}
+.set-panel{position:absolute; top:98px; right:12px; z-index:3; width:min(260px, calc(100% - 24px)); background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:14px; padding:12px 14px; box-shadow:0 8px 24px rgba(0,0,0,.18); font-size:13px}
+.set-panel[hidden]{display:none!important}
+.set-head{display:flex; justify-content:space-between; align-items:center; font-weight:700}
+.set-x{width:28px; height:28px; border-radius:99px; border:1px solid var(--line); background:var(--card); color:var(--ink); font:inherit; font-size:16px; line-height:1; cursor:pointer}
+.set-row{display:grid; grid-template-columns:1fr auto; gap:2px 8px; margin-top:10px}
+.set-row output{color:var(--muted); font-variant-numeric:tabular-nums}
+.set-row input{grid-column:1 / -1; width:100%; accent-color:var(--land)}
+.ctrl{position:absolute; left:12px; top:56px; z-index:3; width:196px; background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:14px; padding:8px 12px 12px; box-shadow:0 8px 24px rgba(0,0,0,.14); font-size:13px}
+.ctrl .chead{display:flex; justify-content:space-between; align-items:center; font-weight:700; padding:2px 0}
+.ctrl .cmin{font:inherit; font-size:12px; padding:3px 9px; border-radius:99px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer}
+.ctrl.min .cbody{display:none}
+.ctrl .chead{cursor:grab; touch-action:none; user-select:none; -webkit-user-select:none}
+.ctrl .cgrip{position:absolute; right:3px; bottom:3px; width:16px; height:16px; cursor:nwse-resize; touch-action:none; background:linear-gradient(135deg, transparent 52%, var(--muted) 52%, var(--muted) 60%, transparent 60%, transparent 74%, var(--muted) 74%, var(--muted) 82%, transparent 82%)}
+.ctrl.min .cgrip{display:none}
+.ctrl h3{font-size:12px; font-weight:500; color:var(--muted); margin:10px 0 6px}
+.ctrl button{font:inherit; font-size:13px; padding:7px 4px; border-radius:9px; border:1px solid var(--line); background:var(--sand); color:var(--ink); cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none}
+.ctrl button:focus-visible{outline:3px solid var(--warm); outline-offset:2px}
+.ctrl .pad{display:grid; grid-template-columns:repeat(3,1fr); gap:4px}
+.ctrl .pad span{display:block}
+.ctrl .crow{display:grid; grid-template-columns:1fr 1fr; gap:4px}
+.ctrl .cmode{display:flex; gap:4px}
+.ctrl .cmode button{flex:1}
+.ctrl .cmode button[aria-pressed="true"]{background:var(--card); border-color:var(--warm); box-shadow:0 0 0 2px var(--warm) inset}
+.set-reset{margin-top:12px; width:100%; font:inherit; padding:7px; border-radius:10px; border:1px solid var(--line); background:var(--sand); color:var(--ink); cursor:pointer}
 .sheet-foot{display:flex;justify-content:center;padding:4px 0 2px}
 .close-wide{font:inherit;font-size:15px;padding:10px 26px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .close-wide:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
@@ -104,11 +139,18 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
 .gantt-scroll{grid-column:1 / -1;min-width:0}
 .gantt{min-width:0}
 .g-row{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;padding:8px 0;border-bottom:1px dashed var(--line)}
-.g-row.head{border-bottom:0;padding:0 0 4px}
+.g-row.head{border-bottom:0;padding:0 0 4px;position:sticky;top:0;z-index:3;background:var(--card);padding-top:6px}
 .g-label{font-size:13px;min-width:0;overflow-wrap:anywhere}
 .g-label small{display:block;color:var(--muted);font-size:12px}
 .g-track{position:relative;height:22px;border-radius:6px;background:var(--sand);margin-top:2px}
-.g-axis{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.g-axis-track{position:relative;height:26px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.g-tick{position:absolute;bottom:6px;transform:translateX(-50%);font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap}
+.g-tick.start{transform:none}
+.g-tick.end{transform:translateX(-100%)}
+.g-tick-line{position:absolute;bottom:0;width:1px;height:5px;background:var(--muted)}
+.g-tick-line.q{height:12px;background:var(--ink)}
+.g-grid{position:absolute;top:0;bottom:0;width:1px;background:var(--line);opacity:.8;pointer-events:none}
+.g-band{position:absolute;top:0;bottom:0;background:var(--line);opacity:.22;pointer-events:none}
 .g-plan{position:absolute;left:0;top:4px;height:5px;border-radius:3px;background:var(--line)}
 .g-act{position:absolute;top:10px;height:8px;border-radius:4px;background:var(--land)}
 .g-act.doing{background:var(--warm)}
@@ -192,6 +234,41 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
 
   <div class="stage" id="stage">
     <div class="labels" id="labels"></div>
+    <div class="ctrl" id="ctrl">
+      <div class="chead" title="拖曳移動，雙擊回到原位"><span>地圖操作</span><button class="cmin" id="cMin" type="button">收合</button></div>
+      <div class="cbody">
+        <h3>平移（按住連續移動）</h3>
+        <div class="pad">
+          <span></span><button type="button" data-act="pan" data-x="0" data-z="1" aria-label="往前平移">▲</button><span></span>
+          <button type="button" data-act="pan" data-x="-1" data-z="0" aria-label="往左平移">◀</button><button type="button" id="cHome" aria-label="回到總務處" title="回到總務處">⌂</button><button type="button" data-act="pan" data-x="1" data-z="0" aria-label="往右平移">▶</button>
+          <span></span><button type="button" data-act="pan" data-x="0" data-z="-1" aria-label="往後平移">▼</button><span></span>
+        </div>
+        <h3>旋轉・角度（按住連續作用）</h3>
+        <div class="crow">
+          <button type="button" data-act="rot" data-v="1">⟲ 左轉</button><button type="button" data-act="rot" data-v="-1">右轉 ⟳</button>
+          <button type="button" data-act="tilt" data-v="-1">抬高視角</button><button type="button" data-act="tilt" data-v="1">壓低視角</button>
+        </div>
+        <h3>縮放（按住連續作用）</h3>
+        <div class="crow">
+          <button type="button" data-act="zoom" data-v="-1">＋ 放大</button><button type="button" data-act="zoom" data-v="1">－ 縮小</button>
+        </div>
+        <h3>滑鼠左鍵／單指拖曳</h3>
+        <div class="cmode" id="cmode">
+          <button type="button" data-m="rotate" aria-pressed="true">旋轉</button><button type="button" data-m="pan" aria-pressed="false">平移</button>
+        </div>
+      </div>
+      <div class="cgrip" id="cGrip" aria-hidden="true"></div>
+    </div>
+    <button class="set-btn" id="setBtn" type="button" aria-expanded="false" aria-controls="setPanel">⚙ 地圖設定</button>
+    <div class="set-panel" id="setPanel" role="dialog" aria-label="地圖設定" hidden>
+      <div class="set-head"><span>地圖設定</span><button class="set-x" id="setClose" type="button" aria-label="關閉設定">×</button></div>
+      <label class="set-row"><span>滾輪縮放靈敏度</span><output data-out="zoom"></output><input type="range" min="0.3" max="3" step="0.1" data-key="zoom"></label>
+      <label class="set-row"><span>旋轉靈敏度</span><output data-out="rotate"></output><input type="range" min="0.3" max="3" step="0.1" data-key="rotate"></label>
+      <label class="set-row"><span>平移靈敏度</span><output data-out="pan"></output><input type="range" min="0.3" max="3" step="0.1" data-key="pan"></label>
+      <label class="set-row"><span>環繞巡迴速度</span><output data-out="orbit"></output><input type="range" min="0" max="3" step="0.1" data-key="orbit"></label>
+      <label class="set-row"><span>光線亮度</span><output data-out="light"></output><input type="range" min="0.4" max="1.8" step="0.1" data-key="light"></label>
+      <button class="set-reset" id="setReset" type="button">恢復預設</button>
+    </div>
     <div class="times" role="group" aria-label="天空時段">
       <button class="tbtn" type="button" data-sky="night" aria-pressed="false">黑夜</button>
       <button class="tbtn" type="button" data-sky="afternoon" aria-pressed="false">下午</button>
@@ -209,10 +286,16 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   </div>
 
   <div class="sheet" id="sheet" hidden>
-    <button class="close" id="closeBtn" type="button" aria-label="關閉">×</button>
     <div class="sheet-box" role="dialog" aria-modal="true" aria-label="工程詳細資料">
-      <section class="detail" id="detail"></section>
-      <div class="sheet-foot"><button class="close-wide" id="closeBtn2" type="button">關閉視窗</button></div>
+      <header class="sheet-head">
+        <div class="sheet-title" id="sheetTitle"></div>
+        <div id="sheetLegend"></div>
+        <button class="close" id="closeBtn" type="button" aria-label="關閉">×</button>
+      </header>
+      <div class="sheet-scroll">
+        <section class="detail" id="detail"></section>
+        <div class="sheet-foot"><button class="close-wide" id="closeBtn2" type="button">關閉視窗</button></div>
+      </div>
     </div>
   </div>
 
@@ -223,7 +306,16 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   </p>
 </div>
 
-<script>
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js";
+import TerrainLib, { TerrainNS, createSeededRandom } from "https://cdn.jsdelivr.net/npm/three.terrain.js@3.1.1/dist/three.terrain.js";
+
+// map settings; a per-viewer convenience, so it is kept in localStorage when the browser allows it
+const SET_DEFAULTS = { zoom:1, rotate:1, pan:1, orbit:1, light:1 };
+const MAP_SET = { ...SET_DEFAULTS };
+try { Object.assign(MAP_SET, JSON.parse(localStorage.getItem("mapSettings") || "{}")); } catch (e) {}
+const saveSet = () => { try { localStorage.setItem("mapSettings", JSON.stringify(MAP_SET)); } catch (e) {} };
+
 const TODAY = "2026-10-30";
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -355,8 +447,37 @@ function ganttHTML(idx){
   const T0 = Math.min(...dates), T1 = Math.max(...dates, ms(TODAY));
   const pos = d => ((ms(d) - T0) / (T1 - T0)) * 100;
   const todayLeft = ((ms(TODAY) - T0) / (T1 - T0)) * 100;
+  // calendar months inside the range: a tick per month, a labelled tick per quarter,
+  // thin gridlines through every row and a light band on alternate months
+  const months = [];
+  let cy = new Date(T0).getUTCFullYear(), cm = new Date(T0).getUTCMonth();
+  for (let guard = 0; guard < 240; guard++){
+    const t = Date.UTC(cy, cm, 1);
+    if (t > T1) break;
+    if (t >= T0) months.push({ cy, cm, x:(t - T0) / (T1 - T0) * 100 });
+    cm++; if (cm > 11){ cm = 0; cy++; }
+  }
+  // quarter labels: "M月" only, with the year shown when it first appears or changes
+  let labelledYear = null;
+  const axisTicks = months.map(m => {
+    const q = m.cm % 3 === 0;
+    let label = "";
+    if (q){
+      const text = m.cy !== labelledYear ? `${m.cy}年${m.cm + 1}月` : `${m.cm + 1}月`;
+      labelledYear = m.cy;
+      const edge = m.x < 4 ? " start" : m.x > 92 ? " end" : "";
+      label = `<span class="g-tick${edge}" style="left:${m.x}%">${text}</span>`;
+    }
+    return `<i class="g-tick-line${q ? " q" : ""}" style="left:${m.x}%"></i>${label}`;
+  }).join("");
+  const grid = months.map((m, i) => {
+    const next = i + 1 < months.length ? months[i + 1].x : 100;
+    const band = i % 2 === 1 ? `<i class="g-band" style="left:${m.x}%;width:${next - m.x}%"></i>` : "";
+    return band + `<i class="g-grid" style="left:${m.x}%"></i>`;
+  }).join("");
+
   let html = `<div class="gantt">
-    <div class="g-row head"><div></div><div class="g-axis"><span>${fmtDate(T0)}</span><span>${fmtDate(T1)}</span></div></div>`;
+    <div class="g-row head"><div class="g-axis-track">${axisTicks}</div></div>`;
   let lastPhase = "";
   list.forEach(([phase, name, owner, ps, pe, as, ae, st]) => {
     if (phase !== lastPhase){ html += `<div class="g-phase">${phase}</div>`; lastPhase = phase; }
@@ -374,18 +495,21 @@ function ganttHTML(idx){
     const actual = as ? `　實際 ${as.replace(/-/g, "/")}${ae ? "～" + ae.replace(/-/g, "/") : "～"}` : "";
     html += `<div class="g-row">
       <div class="g-label">${name}<small>${owner}・${STATUS_LABEL[st]}</small><small>${plan}${actual}</small></div>
-      <div class="g-track">${bars}<div class="g-today" style="left:${todayLeft}%"></div></div>
+      <div class="g-track">${grid}${bars}<div class="g-today" style="left:${todayLeft}%"></div></div>
     </div>`;
   });
-  const legend = `<div class="g-legend">
+  return `<p class="g-note">資料依試算表「(1150907修)」工作表整理，為匯出時的快照；未經同步，請以原始試算表為準。</p>` + html + "</div>";
+}
+
+// legend for the Gantt chart; shown in the fixed header of the popup
+function ganttLegend(){
+  return `<div class="g-legend">
       <span><i style="background:var(--line)"></i>預定</span>
       <span><i style="background:var(--land)"></i>實際（已完成）</span>
       <span><i style="background:var(--warm)"></i>實際（進行中）</span>
       <span><i style="background:#9ca3af"></i>流標</span>
       <span><i style="background:var(--warm);width:2px;height:12px"></i>今日 ${TODAY.replace(/-/g, "/")}</span>
-    </div>
-    <p class="g-note">資料依試算表「(1150907修)」工作表整理，為匯出時的快照；未經同步，請以原始試算表為準。</p>`;
-  return legend + html + "</div>";
+    </div>`;
 }
 
 let active = -1;  // index into projects; -1 means the hub (camera starts centered on 總務處)
@@ -395,11 +519,15 @@ const labelsEl = document.getElementById("labels");
 
 /* ---------- shared UI ---------- */
 function renderDetail(){
+  const titleEl = document.getElementById("sheetTitle");
+  const legendEl = document.getElementById("sheetLegend");
   if (active < 0){
+    // fixed header: hub name only
+    titleEl.innerHTML = `<span class="pill">中心</span><h2>${hub.name}</h2>`;
+    legendEl.innerHTML = "";
+    // scrolling body: progress summary and the four islands
     detail.innerHTML = `
       <div>
-        <span class="pill">中心</span>
-        <h2>${hub.name}</h2>
         <p class="note">${hub.note}</p>
         <div class="big">${hub.pct.toFixed(1)}%</div>
         <p class="small">已完成 ${hub.done} 項，共 ${hub.total} 項任務</p>
@@ -412,6 +540,9 @@ function renderDetail(){
     return;
   }
   const p = projects[active];
+  // fixed header: title, status and the Gantt legend icons
+  titleEl.innerHTML = `<span class="pill">${p.status}</span><h2>${p.name}</h2>`;
+  legendEl.innerHTML = ganttLegend();
   const items = p.milestones.map(([d, label]) => {
     const past = d < TODAY;
     return `<li class="${past ? "past" : ""}">
@@ -420,10 +551,9 @@ function renderDetail(){
       <span class="tag2">${past ? "已到期・待確認" : "待辦"}</span>
     </li>`;
   }).join("");
+  // scrolling body: progress description and content
   detail.innerHTML = `
     <div>
-      <span class="pill">${p.status}</span>
-      <h2>${p.name}</h2>
       <p class="note">${p.note}</p>
       <div class="big">${p.pct.toFixed(1)}%</div>
       <p class="small">已完成 ${p.done} 項，共 ${p.total} 項任務</p>
@@ -476,7 +606,7 @@ function init3D(){
     ? { sky:0x0e2535, sea:0x1f5a7d, sand:0xb8a374, land:0x7fb8dc, hub:0x5fb89f, warm:0xf2a062,
         bridge:0xd8c9a0, bld:0xe6eef5, pole:0xdfe6ea, blue:0x6aa6e0, roof:0xb0704f, door:0x6b5440,
         grass:0x4e8f55, leaf:0x6fbf7a, trunk:0x7a5230, play:0xf2c14e, track:0xc0714b }
-    : { sky:0xd9edf6, sea:0x2a8c9e, sand:0xf2e2b8, land:0x1f5f8b, hub:0x23756e, warm:0xe8833a,
+    : { sky:0xd9edf6, sea:0x4bb3c6, sand:0xf2e2b8, land:0x1f5f8b, hub:0x23756e, warm:0xe8833a,
         bridge:0xc9b07a, bld:0xffffff, pole:0x8fa3b0, blue:0x2f6fb0, roof:0xa94f36, door:0x5b4636,
         grass:0x6fb36a, leaf:0x4f9a5a, trunk:0x7a5230, play:0xf2c14e, track:0xd9825b };
 
@@ -494,10 +624,10 @@ function init3D(){
   const target = new THREE.Vector3(0, 8, 0);
   const desired = new THREE.Vector3(0, 8, 0);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.65);
+  const ambient = new THREE.AmbientLight(0xffffff, 1.1);
   scene.add(ambient);
   const allLamps = [];
-  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+  const sun = new THREE.DirectionalLight(0xffffff, 1.3);
   sun.position.set(200, 400, 150);
   scene.add(sun);
 
@@ -524,20 +654,22 @@ function init3D(){
 
   // three sky presets: 黑夜 (night), 下午 (afternoon), 白天 (day)
   const SKIES = {
-    day:       { sky:0xd9edf6, sea:P.sea,    sun:0xffffff, sunI:0.85, sunPos:[200,400,150],   amb:0.65 },
-    afternoon: { sky:0xf3c9a0, sea:0x3d7f9a, sun:0xffd08a, sunI:1.00, sunPos:[320,170,140],   amb:0.55 },
-    night:     { sky:0x0a1a2a, sea:0x163a55, sun:0x9ab7d9, sunI:0.35, sunPos:[-200,300,-150], amb:0.35 }
+    day:       { sky:0xd9edf6, sea:P.sea,    sun:0xffffff, sunI:1.3,  sunPos:[200,400,150],   amb:1.1 },
+    afternoon: { sky:0xf3c9a0, sea:0x3d7f9a, sun:0xffd08a, sunI:1.45, sunPos:[320,170,140],   amb:1.0 },
+    night:     { sky:0x0a1a2a, sea:0x163a55, sun:0x9ab7d9, sunI:0.5,  sunPos:[-200,300,-150], amb:0.6 }
   };
   const skyButtons = [...document.querySelectorAll(".tbtn[data-sky]")];
+  let curSky = "day";
   function applySky(name){
     const S = SKIES[name];
+    curSky = name;
     scene.background.setHex(S.sky);
     scene.fog.color.setHex(S.sky);
     sea.material.color.setHex(S.sea);
     sun.color.setHex(S.sun);
-    sun.intensity = S.sunI;
+    sun.intensity = S.sunI * MAP_SET.light;
     sun.position.set(...S.sunPos);
-    ambient.intensity = S.amb;
+    ambient.intensity = S.amb * MAP_SET.light;
     stars.visible = name === "night";
     allLamps.forEach(l => { l.bulbMat.emissiveIntensity = name === "night" ? 1.6 : 0; l.glowMat.opacity = name === "night" ? 0.9 : 0; });
     skyButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sky === name)));
@@ -673,8 +805,15 @@ function init3D(){
     const ox = seed * 13.7 + 3, oz = seed * 7.9 + 11;
     const coastR = th => 0.92 + 0.5 * (fbm(Math.cos(th) * 1.7 + ox, Math.sin(th) * 1.7 + oz) - 0.42) + 0.12 * Math.sin(th * 3 + seed * 2.3);
 
-    const geo = new THREE.PlaneGeometry(r * 2.6, r * 2.6, 72, 72);
-    geo.rotateX(-Math.PI / 2);
+    // THREE.Terrain generates the hills (island-shaped, seeded per island)
+    const gen = TerrainLib({
+      heightmap: TerrainNS.HillIsland,
+      xSize: r * 2.6, ySize: r * 2.6, xSegments: 72, ySegments: 72,
+      minHeight: 0, maxHeight: 1, stretch: true,
+      random: createSeededRandom(seed * 1000 + 7)
+    });
+    const geo = gen.children[0].geometry;
+    geo.rotateX(-Math.PI / 2);     // after this, getY(i) holds the generated height in 0..1
     const pos = geo.attributes.position;
     const cols = new Float32Array(pos.count * 3);
     const cSand = new THREE.Color(P.sand), cGrass = new THREE.Color(P.grass);
@@ -684,7 +823,7 @@ function init3D(){
       const d = Math.hypot(px, pz);
       const th = Math.atan2(pz, px);
       const inside = sstep(0, 0.14, coastR(th) - d);          // 0 at the shore, 1 well inland
-      const hills = fbm(px * 2.1 + ox, pz * 2.1 + oz);
+      const hills = pos.getY(i);   // THREE.Terrain height, 0..1
       const natural = -14 + inside * (14 + top * 0.45 * hills);  // sea floor well below the waves; rim lower than the middle
       const plateau = 1 - sstep(0.72, 1.0, d);                 // flat area for buildings
       const y = natural * (1 - plateau) + top * plateau;
@@ -979,7 +1118,7 @@ function init3D(){
     if (!dragging) return;
     if (down.pan){
       // slide the focus point across the sea, in the direction the camera is facing
-      const k = sph.r * 0.0015;
+      const k = sph.r * 0.0015 * MAP_SET.pan;
       const th = sph.theta;
       const right = new THREE.Vector3(Math.cos(th), 0, -Math.sin(th));
       const fwd = new THREE.Vector3(-Math.sin(th), 0, -Math.cos(th));
@@ -990,8 +1129,8 @@ function init3D(){
       desired.copy(p);
       target.copy(p);
     } else {
-      sph.theta = down.th - dx * 0.008;
-      if (viewMode === "free") sph.phi = Math.min(1.4, Math.max(0.08, down.ph - dy * 0.005));
+      sph.theta = down.th - dx * 0.008 * MAP_SET.rotate;
+      if (viewMode === "free") sph.phi = Math.min(1.4, Math.max(0.08, down.ph - dy * 0.005 * MAP_SET.rotate));
     }
   });
   canvas.addEventListener("pointerup", e => {
@@ -1009,7 +1148,9 @@ function init3D(){
   canvas.addEventListener("wheel", e => {
     e.preventDefault();
     const oldR = sph.rTarget;
-    const newR = Math.min(1000, Math.max(160, oldR * Math.exp(e.deltaY * 0.0015)));
+    // trackpads send many small deltas and mice send large ones; normalise both to pixels
+    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
+    const newR = Math.min(1000, Math.max(160, oldR * Math.exp(dy * 0.006 * MAP_SET.zoom)));
     // zooming in drifts the focus toward the point under the cursor
     if (newR < oldR){
       const rect = canvas.getBoundingClientRect();
@@ -1026,6 +1167,124 @@ function init3D(){
     sph.rTarget = newR;
     if (viewMode !== "free" && viewMode !== "orbit") setView("free");
   }, { passive:false });
+
+  // 地圖操作 panel: hold a button to keep moving, turning, tilting or zooming
+  const ctrl = document.getElementById("ctrl");
+  if (window.matchMedia("(max-width: 760px)").matches) ctrl.classList.add("min");
+  const cMin = document.getElementById("cMin");
+  cMin.addEventListener("click", () => {
+    const on = !ctrl.classList.contains("min");
+    ctrl.classList.toggle("min", on);
+    cMin.textContent = on ? "展開" : "收合";
+  });
+  const manualStep = (fn) => {           // any manual control takes over from the preset views
+    if (viewMode !== "free") setView("free");
+    fn();
+  };
+  const actions = {
+    pan(x, z){
+      const th = sph.theta, step = sph.r * 0.006 * MAP_SET.pan;
+      const right = new THREE.Vector3(Math.cos(th), 0, -Math.sin(th));
+      const fwd = new THREE.Vector3(-Math.sin(th), 0, -Math.cos(th));
+      desired.addScaledVector(right, x * step).addScaledVector(fwd, z * step);
+      desired.x = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, desired.x));
+      desired.z = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, desired.z));
+    },
+    rot(v){ sph.theta += v * 0.02; },
+    tilt(v){ sph.phi = Math.min(1.4, Math.max(0.08, sph.phi - v * 0.02)); },
+    zoom(v){ sph.rTarget = Math.min(1000, Math.max(160, sph.rTarget * (1 + v * 0.03))); }
+  };
+  let holdRaf = 0;
+  const stopHold = () => { cancelAnimationFrame(holdRaf); holdRaf = 0; };
+  ctrl.querySelectorAll("[data-act]").forEach(b => {
+    const v = Number(b.dataset.v || 0), x = Number(b.dataset.x || 0), z = Number(b.dataset.z || 0);
+    const act = b.dataset.act;
+    const run = () => {
+      manualStep(() => act === "pan" ? actions.pan(x, z) : actions[act](v));
+      holdRaf = requestAnimationFrame(run);
+    };
+    b.addEventListener("pointerdown", e => {
+      e.preventDefault(); stopHold(); b.setPointerCapture(e.pointerId); run();
+    });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(t => b.addEventListener(t, stopHold));
+  });
+  document.getElementById("cHome").addEventListener("click", () => {
+    window.focusIsland(-1);
+    setView("free");
+    sph.rTarget = (stage.clientWidth / stage.clientHeight < 1 ? 720 : 520);
+  });
+  // drag the panel by its header, resize it from the corner grip, double-click the header to put it back
+  const chead = ctrl.querySelector(".chead"), cgrip = document.getElementById("cGrip"), cbody = ctrl.querySelector(".cbody");
+  const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  let panelDrag = null;
+  chead.addEventListener("pointerdown", e => {
+    if (e.target.closest("button")) return;
+    const a = ctrl.getBoundingClientRect(), b = stage.getBoundingClientRect();
+    panelDrag = { mode:"move", sx:e.clientX, sy:e.clientY, x:a.left - b.left, y:a.top - b.top };
+    chead.setPointerCapture(e.pointerId);
+  });
+  cgrip.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    panelDrag = { mode:"size", sx:e.clientX, sy:e.clientY, w:ctrl.offsetWidth, h:cbody.offsetHeight };
+    cgrip.setPointerCapture(e.pointerId);
+  });
+  const movePanel = e => {
+    if (!panelDrag) return;
+    const dx = e.clientX - panelDrag.sx, dy = e.clientY - panelDrag.sy;
+    if (panelDrag.mode === "move"){
+      ctrl.style.left = clampN(panelDrag.x + dx, 0, stage.clientWidth - ctrl.offsetWidth) + "px";
+      ctrl.style.top = clampN(panelDrag.y + dy, 0, Math.max(0, stage.clientHeight - ctrl.offsetHeight)) + "px";
+    } else {
+      ctrl.style.width = clampN(panelDrag.w + dx, 170, stage.clientWidth - 16) + "px";
+      cbody.style.maxHeight = clampN(panelDrag.h + dy, 120, stage.clientHeight - 60) + "px";
+      cbody.style.overflowY = "auto";
+    }
+  };
+  const endPanelDrag = () => { panelDrag = null; };
+  [chead, cgrip].forEach(el => {
+    el.addEventListener("pointermove", movePanel);
+    el.addEventListener("pointerup", endPanelDrag);
+    el.addEventListener("pointercancel", endPanelDrag);
+  });
+  chead.addEventListener("dblclick", () => {
+    ctrl.style.left = ""; ctrl.style.top = ""; ctrl.style.width = "";
+    cbody.style.maxHeight = ""; cbody.style.overflowY = "";
+  });
+
+  // left-drag mode (旋轉 / 平移) uses the same switch as the top-right button
+  ctrl.querySelectorAll("#cmode button").forEach(b => b.addEventListener("click", () => {
+    const wantPan = b.dataset.m === "pan";
+    if (wantPan !== panMode) modeBtn.click();
+    ctrl.querySelectorAll("#cmode button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+
+  // floating settings panel
+  const setBtn = document.getElementById("setBtn");
+  const setPanel = document.getElementById("setPanel");
+  const setOpen = on => { setPanel.hidden = !on; setBtn.setAttribute("aria-expanded", String(on)); };
+  const showVal = (key, v) => { setPanel.querySelector(`output[data-out="${key}"]`).textContent = Number(v).toFixed(1); };
+  setBtn.addEventListener("click", () => setOpen(setPanel.hidden));
+  document.getElementById("setClose").addEventListener("click", () => setOpen(false));
+  setPanel.querySelectorAll('input[type="range"]').forEach(inp => {
+    const key = inp.dataset.key;
+    inp.value = MAP_SET[key];
+    showVal(key, MAP_SET[key]);
+    inp.addEventListener("input", () => {
+      MAP_SET[key] = Number(inp.value);
+      showVal(key, inp.value);
+      if (key === "light") applySky(curSky);
+      saveSet();
+    });
+  });
+  document.getElementById("setReset").addEventListener("click", () => {
+    Object.assign(MAP_SET, SET_DEFAULTS);
+    setPanel.querySelectorAll('input[type="range"]').forEach(inp => {
+      inp.value = MAP_SET[inp.dataset.key];
+      showVal(inp.dataset.key, MAP_SET[inp.dataset.key]);
+    });
+    applySky(curSky);
+    saveSet();
+  });
 
   // touch: pinch with two fingers to zoom the whole map
   const touches = new Map();
@@ -1104,8 +1363,8 @@ function init3D(){
     if (viewMode !== "free"){
       const goal = viewMode === "top" ? 0.08 : 0.7;
       sph.phi += (goal - sph.phi) * 0.08;
-      sph.r += (sph.rTarget - sph.r) * 0.08;
     }
+    sph.r += (sph.rTarget - sph.r) * 0.08;   // distance eases to its target in every mode
     target.lerp(desired, 0.08);
     camera.position.set(
       target.x + sph.r * Math.sin(sph.phi) * Math.sin(sph.theta),
@@ -1131,7 +1390,7 @@ function init3D(){
       if (has("-","_")) sph.rTarget = Math.min(1000, sph.rTarget * 1.015);
     }
     if (viewPhi !== null && !down) sph.phi += (viewPhi - sph.phi) * 0.06;
-    if (viewMode === "orbit" && !down) sph.theta += 0.0022;
+    if (viewMode === "orbit" && !down) sph.theta += 0.0022 * MAP_SET.orbit;
 
     // gentle bob on the selected island
     const bob = reduceMotion ? 0 : Math.sin(t * 2) * 1.2;
@@ -1176,4 +1435,5 @@ function init3D(){
   }
   requestAnimationFrame(frame);
 }
+window.openSheet = openSheet;
 </script>
