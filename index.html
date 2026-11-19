@@ -1013,8 +1013,90 @@ function init3D(){
   }
   function makeCar(color){
     const c = new THREE.Group();
-    boxRaw(c, 6, 2.2, 3.2, color, 0, 0, 0);
-    boxRaw(c, 3.2, 1.8, 2.8, 0xdbeafe, -0.3, 2, 0);
+    const paint = new THREE.MeshStandardMaterial({ color, roughness:0.27, metalness:0.3 });
+    const glass = new THREE.MeshStandardMaterial({ color:0x294b60, roughness:0.24, metalness:0.12, transparent:true, opacity:0.9 });
+    const rubber = new THREE.MeshStandardMaterial({ color:0x20252a, roughness:0.82 });
+    const chrome = new THREE.MeshStandardMaterial({ color:0xd9e0e3, roughness:0.3, metalness:0.72 });
+    const headlamp = new THREE.MeshStandardMaterial({ color:0xfff2c9, emissive:0x6b5630, emissiveIntensity:0.18, roughness:0.3 });
+    const tailLamp = new THREE.MeshStandardMaterial({ color:0xd8352a, emissive:0x4a0804, emissiveIntensity:0.15, roughness:0.35 });
+    const part = (geometry, material, x, y, z, rx = 0, ry = 0, rz = 0) => {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(x, y, z);
+      mesh.rotation.set(rx, ry, rz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      c.add(mesh);
+      return mesh;
+    };
+    const profile = new THREE.Shape();
+    profile.moveTo(-3.85, 0.48);
+    profile.lineTo(3.85, 0.48);
+    profile.lineTo(3.95, 1.05);
+    profile.quadraticCurveTo(3.82, 1.32, 3.42, 1.42);
+    profile.lineTo(2.9, 1.55);
+    profile.lineTo(2.02, 2.43);
+    profile.quadraticCurveTo(1.82, 2.62, 1.48, 2.62);
+    profile.lineTo(-1.35, 2.62);
+    profile.quadraticCurveTo(-1.7, 2.58, -1.92, 2.31);
+    profile.lineTo(-2.75, 1.55);
+    profile.lineTo(-3.55, 1.38);
+    profile.quadraticCurveTo(-3.9, 1.26, -3.95, 0.95);
+    profile.closePath();
+    const bodyGeo = new THREE.ExtrudeGeometry(profile, {
+      depth:3.12, bevelEnabled:true, bevelSegments:3,
+      steps:1, bevelSize:0.16, bevelThickness:0.12, curveSegments:5
+    });
+    bodyGeo.translate(0, 0, -1.56);
+    part(bodyGeo, paint, 0, 0, 0);
+
+    // Raised die-cast cabin with distinct front and rear side windows.
+    const cabin = new THREE.Shape();
+    cabin.moveTo(-1.9, 1.42);
+    cabin.lineTo(-1.15, 2.48);
+    cabin.quadraticCurveTo(-0.96, 2.68, -0.62, 2.68);
+    cabin.lineTo(1.18, 2.68);
+    cabin.quadraticCurveTo(1.48, 2.65, 1.68, 2.42);
+    cabin.lineTo(2.45, 1.42);
+    cabin.closePath();
+    const cabinGeo = new THREE.ExtrudeGeometry(cabin, { depth:2.48, bevelEnabled:true, bevelSegments:2, steps:1, bevelSize:0.08, bevelThickness:0.06 });
+    cabinGeo.translate(0, 0, -1.24);
+    part(cabinGeo, paint, 0, 0, 0);
+
+    for (const side of [-1, 1]){
+      const rearWindow = new THREE.Shape();
+      rearWindow.moveTo(-1.62, 1.65); rearWindow.lineTo(-1.02, 2.42);
+      rearWindow.lineTo(-0.55, 2.42); rearWindow.lineTo(-0.55, 1.65); rearWindow.closePath();
+      const frontWindow = new THREE.Shape();
+      frontWindow.moveTo(-0.34, 1.65); frontWindow.lineTo(-0.34, 2.42);
+      frontWindow.lineTo(1.12, 2.42); frontWindow.lineTo(1.83, 1.65); frontWindow.closePath();
+      part(new THREE.ShapeGeometry(rearWindow), glass, 0, 0, side * 1.27);
+      part(new THREE.ShapeGeometry(frontWindow), glass, 0, 0, side * 1.27);
+      // door seams, handles and compact side mirrors
+      part(new THREE.BoxGeometry(0.045, 1.0, 0.035), chrome, -0.48, 1.02, side * 1.58);
+      part(new THREE.BoxGeometry(0.34, 0.08, 0.09), chrome, 0.25, 1.52, side * 1.59);
+      part(new THREE.BoxGeometry(0.42, 0.22, 0.32), paint, 1.45, 1.72, side * 1.45);
+      part(new THREE.BoxGeometry(0.28, 0.14, 0.24), glass, 1.5, 1.76, side * 1.61);
+    }
+
+    // Sloped front and rear windscreens give the car a recognizable toy-car profile.
+    part(new THREE.BoxGeometry(0.1, 0.92, 2.16), glass, 1.84, 1.94, 0, 0, 0, -0.48);
+    part(new THREE.BoxGeometry(0.1, 0.78, 2.05), glass, -1.76, 1.93, 0, 0, 0, 0.55);
+
+    // Four rubber wheels with bright metal hubs.
+    for (const x of [-2.55, 2.55]){
+      for (const side of [-1, 1]){
+        part(new THREE.CylinderGeometry(0.78, 0.78, 0.48, 16), rubber, x, 0.72, side * 1.52, Math.PI / 2);
+        part(new THREE.CylinderGeometry(0.37, 0.37, 0.08, 12), chrome, x, 0.72, side * 1.8, Math.PI / 2);
+        part(new THREE.CylinderGeometry(0.14, 0.14, 0.1, 10), paint, x, 0.72, side * 1.86, Math.PI / 2);
+      }
+    }
+    // Chrome bumpers, warm headlights and red rear lamps.
+    part(new THREE.BoxGeometry(0.18, 0.32, 2.72), chrome, 3.88, 0.78, 0);
+    part(new THREE.BoxGeometry(0.18, 0.32, 2.72), chrome, -3.88, 0.78, 0);
+    [-0.92, 0.92].forEach(z => {
+      part(new THREE.BoxGeometry(0.12, 0.36, 0.5), headlamp, 3.92, 1.08, z);
+      part(new THREE.BoxGeometry(0.12, 0.3, 0.42), tailLamp, -3.92, 1.05, z);
+    });
     return c;
   }
   function scatterDecor(g, R, top, seed, lamps){
@@ -1537,7 +1619,7 @@ function init3D(){
   bridges.forEach(br => {
     [[0, 1, 0x3b82f6], [0.5, -1, 0xf59e0b]].forEach(([s0, dir, col]) => {
       const car = makeCar(col);
-      car.scale.setScalar(1.5);
+      car.scale.setScalar(1.08);
       scene.add(car);
       movers.push({ car, br, s0, dir, speed:0.05 });
     });
