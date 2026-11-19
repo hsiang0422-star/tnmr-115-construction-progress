@@ -1126,6 +1126,10 @@ function init3D(){
     box(8, 8, 1, P.blue, -24, y + 14, -12);
     tree(g, -18, 16, y, 0.8);
     tree(g, 16, -18, y, 0.7);
+    // Dedicated accessible route with tactile warning field and controlled edge lighting.
+    box(30, 0.6, 14, P.bridge, -4, y + 0.5, 0, -0.22);
+    box(2, 0.18, 12, P.warm, -4, y + 0.9, 0, -0.22);
+    [-14, 0, 14].forEach(x => [-9, 9].forEach(z => cyl(0.55, 0.55, 4, P.pole, x, y + 2, z, 8)));
   }
   function buildRestroom(g, y){
     const box = (...a) => boxIn(g, ...a);
@@ -1139,6 +1143,12 @@ function init3D(){
     box(3, 4, 0.5, P.warm, 16, y + 9, 12.6);
     tree(g, -20, 14, y, 0.8);
     tree(g, 20, -12, y, 0.7);
+    // Entrance forecourt, weather canopy, support columns and privacy screen.
+    box(30, 0.6, 12, P.bridge, 0, y + 0.35, 18);
+    box(32, 1.2, 8, P.roof, 0, y + 16, 14);
+    [-13, 13].forEach(x => box(1.2, 14, 1.2, P.pole, x, y + 8, 14));
+    box(12, 8, 0.8, P.bld, -18, y + 4, 2);
+    box(8, 1, 1, P.blue, -18, y + 9, 2);
   }
   function buildTrack(g, y){
     const box = (...a) => boxIn(g, ...a);
@@ -1161,6 +1171,17 @@ function init3D(){
     }
     tree(g, -26, -14, y, 0.7);
     tree(g, 26, 10, y, 0.8);
+    // Lane separators and a raised electronic results board distinguish the athletics venue.
+    [19, 21, 23, 25].forEach(radius => {
+      const line = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.16, 6, 64), surface({ color:0xe3e8eb, roughness:0.8 }));
+      line.rotation.x = Math.PI / 2;
+      line.scale.set(1, 0.6, 1);
+      line.position.y = y + 1.8;
+      g.add(line);
+    });
+    box(1.2, 20, 1.2, P.pole, 32, y + 10, -16);
+    box(16, 8, 1.2, 0x263f55, 32, y + 20, -16);
+    box(10, 0.6, 0.6, P.warm, 32, y + 22, -16);
   }
   function buildPlay(g, y){
     const box = (...a) => boxIn(g, ...a);
@@ -1184,6 +1205,14 @@ function init3D(){
     cyl(2, 2.2, 3, P.pole, -6, y + 1.5, 14, 4);
     tree(g, -18, -14, y, 0.8);
     tree(g, 20, 6, y, 0.7);
+    // Accessible approach, safety boundary and shaded staff seating area.
+    box(26, 0.8, 8, P.bridge, 0, y + 0.4, 25);
+    [[-28,-22],[28,-22],[-28,22],[28,22]].forEach(([x,z]) => {
+      box(1.2, 7, 1.2, P.pole, x, y + 3.5, z);
+    });
+    box(58, 0.8, 1, P.pole, 0, y + 6.5, 22);
+    box(18, 1.2, 14, P.bridge, 26, y + 16, -20);
+    [[18,-26],[34,-26],[18,-14],[34,-14]].forEach(([x,z]) => box(1.2, 15, 1.2, P.pole, x, y + 7.5, z));
   }
   function buildCorridor(g, y){
     const box = (...a) => boxIn(g, ...a);
@@ -1199,16 +1228,30 @@ function init3D(){
     [-11.5,11.5].forEach(x => box(0.7, 2.8, 42, P.warm, x, y + 2.5, 0));
     tree(g, -27, -18, y, 0.65);
     tree(g, 27, 18, y, 0.65);
+    // Overhead lighting, cross-bracing and a clearly marked pedestrian crossing.
+    [-15, -5, 5, 15].forEach(z => box(2, 0.5, 5, P.warm, 0, y + 12.8, z));
+    [-18, 18].forEach(z => box(22, 0.6, 1, P.pole, 0, y + 1.8, z));
+    [-3, 3, 9].forEach(x => box(2.2, 0.2, 6, P.warm, x, y + 1.75, 22));
+    box(16, 5, 0.8, P.blue, 0, y + 17.5, -24);
   }
   function buildBus(g, y){
     const box = (...a) => boxIn(g, ...a);
     const cyl = (...a) => cylIn(g, ...a);
     // a yellow touring bus marks the vehicle procurement project
     box(38, 1.2, 22, ASPHALT, 0, y + 0.7, 0);
-    box(34, 10, 16, 0xf2c14e, 0, y + 8, 0);
-    box(20, 5.5, 0.6, 0xb9e4f3, -1, y + 13.2, 8.2);
-    box(18, 5.5, 0.6, 0xb9e4f3, -1, y + 13.2, -8.2);
-    box(0.6, 5.4, 11, 0xa8d9ed, 16.8, y + 10.8, 0);
+    box(34, 10, 16, P.play, 0, y + 8, 0);
+    box(20, 5.5, 0.6, 0x8faab8, -1, y + 13.2, 8.2);
+    box(18, 5.5, 0.6, 0x8faab8, -1, y + 13.2, -8.2);
+    box(0.6, 5.4, 11, 0x7895a5, 16.8, y + 10.8, 0);
+    // Windscreen, passenger door, mirrors and front lighting.
+    box(0.8, 5.4, 12, 0x7895a5, 17.2, y + 13, 0);
+    box(0.8, 7.5, 4.8, P.bld, 6, y + 9, 8.25);
+    box(0.45, 6.2, 3.2, 0x7895a5, 6, y + 9.4, 8.8);
+    [-5.8, 5.8].forEach(z => box(0.9, 1.6, 2.4, P.warm, 17.4, y + 4.8, z));
+    [-10, 10].forEach(z => {
+      box(4, 0.6, 0.6, P.pole, 15, y + 14, z);
+      box(0.6, 1.2, 0.6, P.pole, 14, y + 13.5, z);
+    });
     box(0.8, 6, 16.2, 0xf2c14e, -15.8, y + 10.5, 0);
     box(0.8, 7.5, 3, P.roof, 16.6, y + 4.8, 0);
     box(5, 4, 0.7, P.bld, 17.3, y + 8, 0);
@@ -1217,6 +1260,12 @@ function init3D(){
     box(13, 0.8, 0.8, 0x3f4750, 0, y + 2.4, 0);
     tree(g, -26, -18, y, 0.6);
     tree(g, 27, 18, y, 0.6);
+    // Bus terminal bay, passenger shelter and stop marker.
+    [-18, 18].forEach(z => box(0.8, 0.2, 20, P.bld, -5, y + 1.35, z));
+    box(17, 1, 7, P.bridge, 28, y + 11, 0);
+    [[21,-5],[35,-5],[21,5],[35,5]].forEach(([x,z]) => box(1, 10, 1, P.pole, x, y + 5, z));
+    box(1, 16, 1, P.pole, 38, y + 8, -15);
+    box(8, 8, 0.8, P.blue, 38, y + 16, -15);
   }
   const builders = { ramp:buildRamp, restroom:buildRestroom, track:buildTrack, play:buildPlay, corridor:buildCorridor, bus:buildBus };
 
