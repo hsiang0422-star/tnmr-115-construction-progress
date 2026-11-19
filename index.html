@@ -583,7 +583,7 @@ async function syncLiveProgress() {
   setLiveStatus(`已同步 ${new Date().toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit"})}（每 5 分鐘更新${ok < LIVE_TABS.length ? "；部分分頁讀取失敗" : ""}）。`);
   if (serialized !== previous) {
     try { localStorage.setItem(LIVE_CACHE_KEY,serialized); } catch (e) {}
-    if (previous) { location.reload(); return; }
+    location.reload(); return;
   }
   if (active >= 0) renderDetail();
 }
