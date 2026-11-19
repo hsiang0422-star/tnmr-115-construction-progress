@@ -7,19 +7,19 @@
 <style>
 :root{
   color-scheme: light;
-  --sea:#eaf5ff; --sand:#fff0d8; --land:#70b8a0; --warm:#f29a9b; --jiang:#69ad9b; --brick:#d98788;
-  --ink:#354760; --muted:#71849b; --card:#fffdf9; --line:#d7e6ef;
+  --sea:#edf2f6; --sand:#e8e3d8; --land:#476d68; --warm:#c58a4b; --jiang:#2d6875; --brick:#8e5a4f;
+  --ink:#203448; --muted:#617487; --card:#ffffff; --line:#ced8e1;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --sea:#22283f; --sand:#51485a; --land:#9bd8c2; --warm:#f3a6b2; --jiang:#91d7c6; --brick:#e8a0a4;
-    --ink:#f8eff6; --muted:#c1b8cb; --card:#34334f; --line:#57546f;
+    --sea:#182635; --sand:#4a4b48; --land:#9bb8aa; --warm:#d9ae77; --jiang:#79b3b4; --brick:#bd8476;
+    --ink:#e8edf2; --muted:#aab7c4; --card:#223547; --line:#3a5062;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"]{
-  --sea:#22283f; --sand:#51485a; --land:#9bd8c2; --warm:#f3a6b2; --jiang:#91d7c6; --brick:#e8a0a4;
-  --ink:#f8eff6; --muted:#c1b8cb; --card:#34334f; --line:#57546f;
+  --sea:#182635; --sand:#4a4b48; --land:#9bb8aa; --warm:#d9ae77; --jiang:#79b3b4; --brick:#bd8476;
+  --ink:#e8edf2; --muted:#aab7c4; --card:#223547; --line:#3a5062;
   color-scheme: dark;
 }
 *{box-sizing:border-box}
@@ -33,28 +33,28 @@ body{
 }
 .wrap{max-width:980px;margin:0 auto;min-width:0}
 .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--jiang);font-weight:700;margin:0}
-.wave{display:block;width:100%;height:28px;margin:14px 0 0}
+.wave{display:none}
 .motifs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;padding:0;list-style:none}
-.motifs li{font-size:13px;padding:4px 12px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--ink)}
+.motifs li{font-size:12px;padding:4px 10px;border-radius:5px;background:var(--card);border:1px solid var(--line);color:var(--muted)}
 .motifs li:nth-child(1){border-color:var(--jiang)}
 .motifs li:nth-child(2){border-color:var(--brick)}
 .motifs li:nth-child(3){border-color:var(--warm)}
 .motifs li:nth-child(4){border-color:var(--land)}
-h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:balance}
+h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;font-size:30px;font-weight:700;letter-spacing:.01em;margin:4px 0 6px;text-wrap:balance}
 .sub{margin:0;color:var(--muted)}
-.source-sheet{display:inline-flex;align-items:center;gap:8px;margin:12px 0 0;padding:8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--land);font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 4px 12px rgba(92,128,160,.10);transition:transform .15s ease,box-shadow .15s ease}
-.source-sheet:hover{transform:translateY(-1px);box-shadow:0 7px 16px rgba(92,128,160,.16)}
-.source-sheet:focus-visible{outline:3px solid var(--warm);outline-offset:3px}
+.source-sheet{display:inline-flex;align-items:center;gap:8px;margin:14px 0 0;padding:8px 12px;border-radius:6px;background:var(--card);border:1px solid var(--line);color:var(--jiang);font-size:13px;font-weight:600;text-decoration:none;transition:background .15s ease,border-color .15s ease}
+.source-sheet:hover{background:var(--sea);border-color:var(--jiang)}
+.source-sheet:focus-visible{outline:2px solid var(--warm);outline-offset:2px}
 
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 16px}
-.stat{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--jiang);border-radius:22px;padding:14px 16px;min-width:0;box-shadow:0 5px 16px rgba(92,128,160,.10)}
+.stat{background:var(--card);border:1px solid var(--line);border-top:2px solid var(--jiang);border-radius:10px;padding:14px 16px;min-width:0;box-shadow:0 2px 8px rgba(31,51,70,.05)}
 .stat .k{font-size:13px;color:var(--muted)}
 .stat .v{font-size:26px;font-weight:700;color:var(--land);font-variant-numeric:tabular-nums}
 
 .stage{
   position:relative; height:min(64vh,540px); min-height:360px;
-  border-radius:28px; overflow:hidden; border:2px solid var(--line);
-  background:var(--sea); box-shadow:0 10px 28px rgba(92,128,160,.14);
+  border-radius:12px; overflow:hidden; border:1px solid var(--line);
+  background:var(--sea); box-shadow:0 5px 18px rgba(31,51,70,.10);
 }
 .stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .stage canvas:active{cursor:grabbing}
@@ -227,7 +227,7 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
       <li>黑面琵鷺</li>
       <li>無障礙共融</li>
     </ul>
-    <a class="source-sheet" href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener noreferrer" aria-label="在新分頁開啟原始工程進度 Excel 試算表（Google 試算表）">📊 開啟原始工程 Excel 試算表 ↗</a>
+    <a class="source-sheet" href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener noreferrer" aria-label="在新分頁開啟原始工程進度 Excel 試算表（Google 試算表）">開啟原始工程進度試算表 ↗</a>
   </header>
 
   <div class="stats">
@@ -815,12 +815,12 @@ function init3D(){
   const dark = document.documentElement.dataset.theme === "dark" ||
     (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
   const P = dark
-    ? { sky:0x34334f, sea:0x504d70, sand:0xc5aaca, land:0x9bd8c2, hub:0x91d7c6, warm:0xf3a6b2,
-        bridge:0xe4c3a7, bld:0xf8eff6, pole:0xd6d0e0, blue:0x9bc8ef, roof:0xe8a0a4, door:0x786a80,
-        grass:0x8fc99b, leaf:0xa9ddb0, trunk:0x96745e, play:0xf6d68c, track:0xe7a38f }
-    : { sky:0xeaf5ff, sea:0xc7e8f4, sand:0xffedce, land:0x77c7a4, hub:0x73bfa9, warm:0xf29a9b,
-        bridge:0xe2c09c, bld:0xfff9f1, pole:0xb1c5d0, blue:0x8fc1e9, roof:0xe58c8d, door:0x8a6d61,
-        grass:0x8bcf8b, leaf:0x9bd79b, trunk:0xa17a58, play:0xf5d47d, track:0xe79a81 };
+    ? { sky:0x182635, sea:0x263f55, sand:0x777567, land:0x85aa9b, hub:0x69aeb1, warm:0xd9ae77,
+        bridge:0x71818e, bld:0xd7e0e7, pole:0x9daab4, blue:0x75a6c7, roof:0x9c6559, door:0x514b48,
+        grass:0x60846d, leaf:0x72977a, trunk:0x65594e, play:0xb7a06b, track:0x9b7466 }
+    : { sky:0xd7e2eb, sea:0x96adbd, sand:0xb6ad97, land:0x547f70, hub:0x286c78, warm:0xc58a4b,
+        bridge:0x778896, bld:0xe7ecef, pole:0x8293a0, blue:0x397393, roof:0x985c50, door:0x66584d,
+        grass:0x638361, leaf:0x4f7857, trunk:0x77634f, play:0xc5a65f, track:0xa06e5e };
 
   const ASPHALT = dark ? 0x4b5563 : 0x8b96a3;
   const renderer = new THREE.WebGLRenderer({ antialias:true });
@@ -843,39 +843,21 @@ function init3D(){
   sun.position.set(200, 400, 150);
   scene.add(sun);
 
-  // A subtle fiber texture gives the whole miniature world a soft wool-felt finish.
-  const feltCanvas = document.createElement("canvas");
-  feltCanvas.width = feltCanvas.height = 256;
-  const feltCtx = feltCanvas.getContext("2d");
-  feltCtx.fillStyle = "#f7f5ef";
-  feltCtx.fillRect(0, 0, 256, 256);
-  let fiberSeed = 1152026;
-  const fiberRandom = () => { fiberSeed = (fiberSeed * 1664525 + 1013904223) >>> 0; return fiberSeed / 4294967296; };
-  for (let i = 0; i < 2200; i++) {
-    const x = fiberRandom() * 256, y = fiberRandom() * 256;
-    const light = fiberRandom() > 0.43;
-    feltCtx.strokeStyle = light ? "rgba(255,255,255,0.42)" : "rgba(93,81,70,0.10)";
-    feltCtx.lineWidth = 0.35 + fiberRandom() * 0.7;
-    feltCtx.beginPath(); feltCtx.moveTo(x, y); feltCtx.lineTo(x + (fiberRandom() - 0.5) * 3, y + 1 + fiberRandom() * 4); feltCtx.stroke();
-  }
-  const feltTexture = new THREE.CanvasTexture(feltCanvas);
-  feltTexture.wrapS = feltTexture.wrapT = THREE.RepeatWrapping;
-  feltTexture.repeat.set(3, 3);
-  feltTexture.colorSpace = THREE.SRGBColorSpace;
-  const felt = (options = {}) => new THREE.MeshStandardMaterial({
-    map:feltTexture, bumpMap:feltTexture, bumpScale:0.12, roughness:1, metalness:0, ...options
+  // Clean, precise engineering surfaces with restrained matte reflections.
+  const surface = (options = {}) => new THREE.MeshStandardMaterial({
+    roughness:0.78, metalness:0.025, ...options
   });
 
-  // Cloud sea: soft pastel wool felt under the floating cloud banks.
+  // Cloud sea: cool atmospheric surface with restrained cloud banks.
   const seaGeo = new THREE.PlaneGeometry(1600, 1600, 80, 80);
-  const sea = new THREE.Mesh(seaGeo, felt({ color:0xc7e8f4, roughness:1, metalness:0, flatShading:false }));
+  const sea = new THREE.Mesh(seaGeo, surface({ color:0x96adbd, roughness:0.84, metalness:0.025, flatShading:false }));
   sea.rotation.x = -Math.PI / 2;
   scene.add(sea);
 
   const cloudGeo = new THREE.SphereGeometry(1, 14, 10);
-  const cloudMat = felt({
-    color:0xfffcf5, roughness:1, transparent:true, opacity:0.96, depthWrite:false,
-    emissive:0xf5f0eb, emissiveIntensity:0.035
+  const cloudMat = surface({
+    color:0xe5ebef, roughness:0.9, transparent:true, opacity:0.58, depthWrite:false,
+    emissive:0x8093a2, emissiveIntensity:0.025
   });
   const cloudBanks = [];
   const cloudAnchors = [
@@ -916,9 +898,9 @@ function init3D(){
 
   // three sky presets: 黑夜 (night), 下午 (afternoon), 白天 (day)
   const SKIES = {
-    day:       { sky:0xeaf5ff, sea:0xc7e8f4, cloud:0xfffcf5, sun:0xffffff, sunI:1.3,  sunPos:[200,400,150],   amb:1.1 },
-    afternoon: { sky:0xf9d9ce, sea:0xe9cddf, cloud:0xfff0df, sun:0xffd79f, sunI:1.35, sunPos:[320,170,140],   amb:1.0 },
-    night:     { sky:0x34334f, sea:0x504d70, cloud:0xd9d3e7, sun:0xb9c9f3, sunI:0.55, sunPos:[-200,300,-150], amb:0.6 }
+    day:       { sky:0xd7e2eb, sea:0x96adbd, cloud:0xe8edf1, sun:0xffffff, sunI:1.25, sunPos:[200,400,150],   amb:1.0 },
+    afternoon: { sky:0xd8cfc3, sea:0x9f9b99, cloud:0xe3dbd1, sun:0xf2d1a0, sunI:1.15, sunPos:[320,170,140], amb:0.92 },
+    night:     { sky:0x182635, sea:0x263f55, cloud:0x667a8c, sun:0x91a8bc, sunI:0.5,  sunPos:[-200,300,-150], amb:0.58 }
   };
   const skyButtons = [...document.querySelectorAll(".tbtn[data-sky]")];
   let curSky = "day";
@@ -946,7 +928,7 @@ function init3D(){
   const SZ = 1.45;
   let CUR_TOP = 0;
   const Y = y => CUR_TOP + (y - CUR_TOP) * SZ;
-  const mat = c => felt({ color:c, roughness:1 });
+  const mat = c => surface({ color:c, roughness:1 });
   function boxRaw(g, w, h, d, c, x, y, z, rz = 0, ry = 0){
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
     m.position.set(x, y, z); m.rotation.set(0, ry, rz);
@@ -1098,20 +1080,19 @@ function init3D(){
     }
     geo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
     geo.computeVertexNormals();
-    const terrain = new THREE.Mesh(geo, felt({
+    const terrain = new THREE.Mesh(geo, surface({
       vertexColors:true, roughness:1, flatShading:true, bumpScale:0.18
     }));
     group.add(terrain);
 
-    // Felted floating-island cliffs, inspired by Three.js terrain/fog demos and Meshy island dioramas.
-    // A tapered wool-rock underside makes each project island read as a small suspended landscape.
-    const cliffFelt = felt({
-      color:dark ? 0x8b829d : 0xc9957f,
-      roughness:1, flatShading:true, bumpScale:0.2
+    // Tapered strata beneath each island give the engineering map a clear terrain profile.
+    const cliffMat = surface({
+      color:dark ? 0x596977 : 0x7e8587,
+      roughness:0.86, flatShading:true
     });
     const cliff = new THREE.Mesh(
       new THREE.CylinderGeometry(r * 0.78, r * 0.14, 34, 18, 3, false),
-      cliffFelt
+      cliffMat
     );
     cliff.position.y = -7;
     cliff.rotation.y = seed * 0.31;
@@ -1119,24 +1100,12 @@ function init3D(){
 
     const ledge = new THREE.Mesh(
       new THREE.CylinderGeometry(r * 0.79, r * 0.68, 5, 18, 1, false),
-      felt({ color:dark ? 0xa59ab3 : 0xe2b49a, roughness:1, flatShading:true, bumpScale:0.16 })
+      surface({ color:dark ? 0x78818a : 0xa8a398, roughness:0.86, flatShading:true })
     );
     ledge.position.y = -4;
     ledge.rotation.y = seed * 0.31;
     group.add(ledge);
 
-    // Tiny rounded boulders soften the cliff edge and echo the handmade diorama look.
-    const pebbleMats = [
-      felt({ color:dark ? 0xa99ab5 : 0xd9aa8e, roughness:1, flatShading:true }),
-      felt({ color:dark ? 0x7c91a6 : 0xb77f76, roughness:1, flatShading:true })
-    ];
-    for (let i = 0; i < 7; i++){
-      const a = (i / 7) * Math.PI * 2 + seed * 0.37;
-      const pebble = new THREE.Mesh(new THREE.DodecahedronGeometry(r * (0.075 + (i % 3) * 0.012), 0), pebbleMats[i % 2]);
-      pebble.position.set(Math.cos(a) * r * 0.55, -10 + (i % 2) * 3, Math.sin(a) * r * 0.55);
-      pebble.scale.set(1, 0.72, 0.86);
-      group.add(pebble);
-    }
     return { group, base:terrain, land:terrain, top };
   }
 
