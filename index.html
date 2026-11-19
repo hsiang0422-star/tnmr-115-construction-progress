@@ -227,9 +227,9 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   </header>
 
   <div class="stats">
-    <div class="stat"><div class="k">整體完成度</div><div class="v">50.0%</div></div>
-    <div class="stat"><div class="k">已完成／總任務</div><div class="v">37 / 74</div></div>
-    <div class="stat"><div class="k">執行中工程</div><div class="v">4 項</div></div>
+    <div class="stat"><div class="k">整體完成度</div><div class="v" id="overallPct">50.0%</div></div>
+    <div class="stat"><div class="k">已完成／總任務</div><div class="v" id="completedTasks">37 / 74</div></div>
+    <div class="stat"><div class="k">執行中工程</div><div class="v" id="inProgressCount">4 項</div></div>
   </div>
 
   <div class="stage" id="stage">
@@ -528,6 +528,18 @@ function liveSnapshot() {
     }))
   };
 }
+function renderHubStats() {
+  const done = projects.reduce((sum,project) => sum + (Number(project.done) || 0),0);
+  const total = projects.reduce((sum,project) => sum + (Number(project.total) || 0),0);
+  const running = projects.filter((project,index) => TASKS[index].some(task => task[7] === "doing")).length;
+  const pct = total ? (done / total * 100).toFixed(1) : "0.0";
+  const pctEl = document.getElementById("overallPct");
+  const tasksEl = document.getElementById("completedTasks");
+  const runningEl = document.getElementById("inProgressCount");
+  if (pctEl) pctEl.textContent = pct + "%";
+  if (tasksEl) tasksEl.textContent = `${done} / ${total}`;
+  if (runningEl) runningEl.textContent = `${running} 項`;
+}
 function applyLiveSnapshot(snapshot) {
   if (!snapshot || !Array.isArray(snapshot.projects) || snapshot.projects.length !== projects.length) return;
   snapshot.projects.forEach((data,index) => {
@@ -541,8 +553,10 @@ function applyLiveSnapshot(snapshot) {
   const total = projects.reduce((sum,p) => sum + p.total,0);
   hub.done = done; hub.total = total; hub.pct = total ? +(done/total*100).toFixed(1) : 0;
   hub.note = `四項工程整體完成度 ${hub.pct.toFixed(1)}%，共 ${done}／${total} 項任務已完成。進度由工程試算表同步。`;
+  renderHubStats();
 }
 try { applyLiveSnapshot(JSON.parse(localStorage.getItem(LIVE_CACHE_KEY) || "null")); } catch (e) {}
+renderHubStats();
 async function syncLiveProgress() {
   const results = await Promise.allSettled(LIVE_TABS.map(async (tab,index) => {
     const [summary3, summary4, body] = await Promise.all([
@@ -561,6 +575,7 @@ async function syncLiveProgress() {
   const total = projects.reduce((sum,p) => sum + p.total,0);
   hub.done = done; hub.total = total; hub.pct = total ? +(done/total*100).toFixed(1) : 0;
   hub.note = `四項工程整體完成度 ${hub.pct.toFixed(1)}%，共 ${done}／${total} 項任務已完成。進度由工程試算表同步。`;
+  renderHubStats();
   const fresh = liveSnapshot();
   const serialized = JSON.stringify(fresh);
   let previous = "";
