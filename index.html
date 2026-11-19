@@ -300,8 +300,8 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   </div>
 
   <p class="foot">
-    資料日期 2026/09/23，依修正版工程明細。總覽頁仍顯示舊版共融遊具進度 3.4%，本頁採修正版的 62.5%。
-    標示「已到期」的節點尚未在來源表確認，請核對原始工作表。
+    四座工程島的任務、進度與甘特圖由原始工程試算表的公開鏡像載入，每 5 分鐘檢查更新；無法連線時保留頁面快照。
+    <span id="syncStatus" role="status" aria-live="polite">同步中，暫時顯示頁面快照。</span>
     <a href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener">開啟原始工程進度試算表</a>
   </p>
 </div>
@@ -316,7 +316,7 @@ const MAP_SET = { ...SET_DEFAULTS };
 try { Object.assign(MAP_SET, JSON.parse(localStorage.getItem("mapSettings") || "{}")); } catch (e) {}
 const saveSet = () => { try { localStorage.setItem("mapSettings", JSON.stringify(MAP_SET)); } catch (e) {} };
 
-const TODAY = "2026-10-30";
+const TODAY = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Taipei"}).format(new Date());
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const hub = {
@@ -431,6 +431,147 @@ const TASKS = [
     ["六 驗收與付款","付款作業","事務組、主計室","2026-10-19","2026-10-30",null,null,"todo"]
   ]
 ];
+
+// Live progress source: public mirror imports the school's original spreadsheet with IMPORTRANGE.
+const LIVE_SHEET_ID = "1-faQIzsanySNZc-RZEr31LzLWj8eMN2rVZwyrWFOk8U";
+const LIVE_TABS = [
+  "無障礙斜坡道工程(1150907修)",
+  "性別友善廁所工程(1150907修)",
+  "跑道改建工程(1150907修)",
+  "共融遊具改建工程(1150907修)"
+];
+const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v1";
+const liveStatusEl = document.getElementById("syncStatus");
+const setLiveStatus = message => { if (liveStatusEl) liveStatusEl.textContent = message; };
+const normLiveDate = value => {
+  const text = String(value ?? "").trim();
+  let m = text.match(/^(\\d{4})[-/](\\d{1,2})[-/](\\d{1,2})$/);
+  if (!m) {
+    m = text.match(/^Date\\((\\d+),(\\d+),(\\d+)\\)$/);
+    if (m) return `${m[1]}-${String(+m[2]+1).padStart(2,"0")}-${String(+m[3]).padStart(2,"0")}`;
+    return null;
+  }
+  return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
+};
+const liveCellText = cell => {
+  if (!cell) return "";
+  const value = cell.v;
+  if (typeof value === "string" && value.startsWith("Date(")) return normLiveDate(value) || "";
+  if (value === null || value === undefined) return cell.f ?? "";
+  return String(value);
+};
+const liveGvizRows = table => (table.rows || []).map(row => (row.c || []).map(liveCellText));
+function loadLiveGviz(sheetName, range) {
+  return new Promise((resolve, reject) => {
+    const callback = "tnmr_gv_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+    const timer = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 15000);
+    function cleanup() { clearTimeout(timer); delete window[callback]; script.remove(); }
+    window[callback] = response => {
+      cleanup();
+      response.status === "ok" ? resolve(liveGvizRows(response.table)) : reject(new Error(response.status || "query"));
+    };
+    script.onerror = () => { cleanup(); reject(new Error("network")); };
+    const url = `https://docs.google.com/spreadsheets/d/${LIVE_SHEET_ID}/gviz/tq?tqx=out:json;responseHandler:${callback}&headers=0&sheet=${encodeURIComponent(sheetName)}&range=${encodeURIComponent(range)}&_=${Date.now()}`;
+    script.src = url;
+    document.head.appendChild(script);
+  });
+}
+function applyLiveRows(projectIndex, rows) {
+  const project = projects[projectIndex];
+  let total = null, done = null;
+  rows.slice(0, 8).forEach(row => row.forEach((value, column) => {
+    const label = String(value ?? "").trim().replace(/[：:]$/, "");
+    const numeric = Number(String(row[column + 1] ?? "").replace(/,/g, ""));
+    if (label === "總任務數" && Number.isFinite(numeric) && numeric > 0) total = numeric;
+    if (label === "已完成" && Number.isFinite(numeric) && numeric >= 0) done = numeric;
+  }));
+  const tasks = [];
+  const seen = new Set();
+  rows.forEach(row => {
+    const id = String(row[0] ?? "").trim();
+    if (!/^\\d+\\.\\d+$/.test(id) || seen.has(id)) return;
+    seen.add(id);
+    const rawStatus = String(row[9] ?? "").trim();
+    if (rawStatus === "不適用" && !String(row[10] ?? "").trim()) return;
+    const status = ({ "已完成":"done", "進行中":"doing", "流標":"stop", "未開始":"todo", "不適用":"na" })[rawStatus] || (rawStatus ? null : "todo");
+    if (!status) return;
+    tasks.push([
+      String(row[1] ?? "").trim(),
+      String(row[2] ?? "").trim(),
+      String(row[3] ?? "").trim(),
+      normLiveDate(row[5]), normLiveDate(row[6]), normLiveDate(row[7]), normLiveDate(row[8]), status
+    ]);
+  });
+  if (!tasks.length) return false;
+  project.done = done ?? tasks.filter(task => task[7] === "done").length;
+  project.total = total ?? tasks.length;
+  project.pct = +(project.done / project.total * 100).toFixed(1);
+  project.status = tasks.some(task => task[7] === "doing") ? "進行中" :
+    tasks.some(task => task[7] === "todo") ? "尚未完成" : "已完成";
+  const doingNotes = tasks.filter(task => task[7] === "doing").map(task => task[1]).filter(Boolean);
+  project.note = doingNotes.length ? `目前進行：${doingNotes.join("、")}` :
+    `已完成 ${project.done}／${project.total} 項任務；進度依試算表更新。`;
+  project.milestones = tasks
+    .filter(task => task[7] !== "done" && task[7] !== "na" && task[4])
+    .sort((a,b) => a[4].localeCompare(b[4]))
+    .slice(0,3)
+    .map(task => [task[4], `${task[1]}（預定完成）`]);
+  TASKS[projectIndex] = tasks;
+  return true;
+}
+function liveSnapshot() {
+  return {
+    projects: projects.map(project => ({
+      pct:project.pct, done:project.done, total:project.total, status:project.status,
+      note:project.note, milestones:project.milestones, tasks:TASKS[projects.indexOf(project)]
+    }))
+  };
+}
+function applyLiveSnapshot(snapshot) {
+  if (!snapshot || !Array.isArray(snapshot.projects) || snapshot.projects.length !== projects.length) return;
+  snapshot.projects.forEach((data,index) => {
+    Object.assign(projects[index], {
+      pct:data.pct, done:data.done, total:data.total, status:data.status,
+      note:data.note, milestones:data.milestones
+    });
+    if (Array.isArray(data.tasks)) TASKS[index] = data.tasks;
+  });
+  const done = projects.reduce((sum,p) => sum + p.done,0);
+  const total = projects.reduce((sum,p) => sum + p.total,0);
+  hub.done = done; hub.total = total; hub.pct = total ? +(done/total*100).toFixed(1) : 0;
+  hub.note = `四項工程整體完成度 ${hub.pct.toFixed(1)}%，共 ${done}／${total} 項任務已完成。進度由工程試算表同步。`;
+}
+try { applyLiveSnapshot(JSON.parse(localStorage.getItem(LIVE_CACHE_KEY) || "null")); } catch (e) {}
+async function syncLiveProgress() {
+  const results = await Promise.allSettled(LIVE_TABS.map(async (tab,index) => {
+    const [summary3, summary4, body] = await Promise.all([
+      loadLiveGviz(tab,"A3:K3").catch(() => []),
+      loadLiveGviz(tab,"A4:K4").catch(() => []),
+      loadLiveGviz(tab,"A1:K70")
+    ]);
+    return applyLiveRows([0,1,2,3][index], [...summary3,...summary4,...body]);
+  }));
+  const ok = results.filter(result => result.status === "fulfilled" && result.value).length;
+  if (!ok) {
+    setLiveStatus("試算表目前無法連線，畫面保留頁面快照；請確認公開鏡像可供檢視。");
+    return;
+  }
+  const done = projects.reduce((sum,p) => sum + p.done,0);
+  const total = projects.reduce((sum,p) => sum + p.total,0);
+  hub.done = done; hub.total = total; hub.pct = total ? +(done/total*100).toFixed(1) : 0;
+  hub.note = `四項工程整體完成度 ${hub.pct.toFixed(1)}%，共 ${done}／${total} 項任務已完成。進度由工程試算表同步。`;
+  const fresh = liveSnapshot();
+  const serialized = JSON.stringify(fresh);
+  let previous = "";
+  try { previous = localStorage.getItem(LIVE_CACHE_KEY) || ""; } catch (e) {}
+  setLiveStatus(`已同步 ${new Date().toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit"})}（每 5 分鐘更新${ok < LIVE_TABS.length ? "；部分分頁讀取失敗" : ""}）。`);
+  if (serialized !== previous) {
+    try { localStorage.setItem(LIVE_CACHE_KEY,serialized); } catch (e) {}
+    if (previous) { location.reload(); return; }
+  }
+  if (active >= 0) renderDetail();
+}
 
 // Gantt chart for one project: each task on a shared timeline, plan (thin) vs actual (bar)
 const STATUS_LABEL = { done:"已完成", doing:"進行中", stop:"流標", todo:"未開始", na:"不適用" };
@@ -1436,4 +1577,6 @@ function init3D(){
   requestAnimationFrame(frame);
 }
 window.openSheet = openSheet;
+syncLiveProgress();
+setInterval(syncLiveProgress, 5 * 60 * 1000);
 </script>
