@@ -42,6 +42,9 @@ body{
 .motifs li:nth-child(4){border-color:var(--land)}
 h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:balance}
 .sub{margin:0;color:var(--muted)}
+.source-sheet{display:inline-flex;align-items:center;gap:8px;margin:12px 0 0;padding:8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--land);font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 4px 12px rgba(92,128,160,.10);transition:transform .15s ease,box-shadow .15s ease}
+.source-sheet:hover{transform:translateY(-1px);box-shadow:0 7px 16px rgba(92,128,160,.16)}
+.source-sheet:focus-visible{outline:3px solid var(--warm);outline-offset:3px}
 
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 16px}
 .stat{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--jiang);border-radius:22px;padding:14px 16px;min-width:0;box-shadow:0 5px 16px rgba(92,128,160,.10)}
@@ -224,6 +227,7 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
       <li>黑面琵鷺</li>
       <li>無障礙共融</li>
     </ul>
+    <a class="source-sheet" href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener noreferrer" aria-label="在新分頁開啟原始工程進度 Excel 試算表（Google 試算表）">📊 開啟原始工程 Excel 試算表 ↗</a>
   </header>
 
   <div class="stats">
@@ -302,7 +306,7 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   <p class="foot">
     六座工程島的任務、進度與甘特圖均由公開鏡像載入，每 5 分鐘檢查更新；無法連線時保留頁面快照。
     <span id="syncStatus" role="status" aria-live="polite">同步中，暫時顯示頁面快照。</span>
-    <a href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener">開啟原始工程進度試算表</a>
+    <a href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener">原始工程進度試算表</a>
   </p>
 </div>
 
