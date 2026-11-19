@@ -300,7 +300,7 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   </div>
 
   <p class="foot">
-    六座工程島均列出於此；前五項工程由公開鏡像每 5 分鐘同步，大型巴士專案顯示目前讀取的試算表資料，待公開鏡像加入該分頁後即可同步更新。
+    六座工程島的任務、進度與甘特圖均由公開鏡像載入，每 5 分鐘檢查更新；無法連線時保留頁面快照。
     <span id="syncStatus" role="status" aria-live="polite">同步中，暫時顯示頁面快照。</span>
     <a href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener">開啟原始工程進度試算表</a>
   </p>
@@ -320,8 +320,8 @@ const TODAY = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Taipei"}).format(
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const hub = {
-  name:"總務處", pct:42.0, done:42, total:100,
-  note:"115 學年度六項工程整體完成度 42.0%，共 42／100 項任務已完成。點選周圍六座島可查看各工程節點。",
+  name:"總務處", pct:41.6, done:42, total:101,
+  note:"115 學年度六項工程整體完成度 41.6%，共 42／101 項任務已完成。點選周圍六座島可查看各工程節點。",
   pos:[0,0], r:70
 };
 
@@ -347,9 +347,9 @@ const projects = [
     note:"交通車廊道鋼構工程進度依試算表更新，目前招標公告進行中。",
     milestones:[["2026-11-05","招標公告預定完成"],["2026-12-08","基本設計預定完成"],["2027-08-20","付款作業預定完成"]],
     pos:[0,-190], r:48 },
-  { name:"購置大型巴士專案", short:"大型巴士", kind:"bus", pct:11.1, done:1, total:9, status:"進行中",
+  { name:"購置大型巴士專案", short:"大型巴士", kind:"bus", pct:10.0, done:1, total:10, status:"進行中",
     note:"目前進行：底盤進線、立骨架、骨架焊接；內裝及座椅皮革顏色已選定。",
-    milestones:[["2026-12-31","骨架組立、骨架完成"],["2027-01-31","車體鈑金"],["2027-01-31","內裝、座椅安裝及塗裝"]],
+    milestones:[["2026-12-31","骨架組立、骨架完成"],["2027-01-31","車體鈑金"],["2027-04-15","交車"]],
     pos:[0,220], r:50 }
 ];
 
@@ -447,8 +447,9 @@ const TASKS = [
     ["階段二","挑選內裝、座椅皮革顏色","需求單位、事務組、車體廠","2026-10-16","2026-10-16","2026-10-16","2026-10-16","done","10/16 挑選內裝及座椅皮革顏色"],
     ["階段三","車體鈑金","車體廠","2027-01-01","2027-01-31",null,null,"todo","預計2027年1月鈑金完成"],
     ["階段四","內裝、座椅安裝及塗裝","車體廠",null,null,null,null,"todo","待廠商提供時程"],
-    ["階段四","交車驗收","需求單位、事務組",null,null,null,null,"todo","待廠商提供時程"],
-    ["階段四","付款作業","事務組、主計室",null,null,null,null,"todo",""]
+    ["階段四","交車","車體廠、事務組","2027-04-01","2027-04-15",null,null,"todo","預計2027年4月交車"],
+    ["階段四","驗收","需求單位、事務組","2027-04-16","2027-04-30",null,null,"todo","預計2027年4月完成驗收"],
+    ["階段四","付款作業","事務組、主計室",null,null,null,null,"todo","驗收後辦理"]
   ]
 
 ];
@@ -460,16 +461,18 @@ const LIVE_TABS = [
   "性別友善廁所工程(1150907修)",
   "跑道改建工程(1150907修)",
   "共融遊具改建工程(1150907修)",
-  "交通車廊道鋼構工程"
+  "交通車廊道鋼構工程",
+  "購置大型巴士專案"
 ];
 const LIVE_SUMMARY_CELLS = [
   {total:"E3", done:"G3"}, // 無障礙斜坡道
   {total:"F3", done:"I3"}, // 性別友善廁所
   {total:"E3", done:"G3"}, // 跑道
   {total:"E3", done:"G3"}, // 共融遊具
-  {total:"E3", done:"G3"}  // 交通車廊道鋼構
+  {total:"E3", done:"G3"}, // 交通車廊道鋼構
+  {total:"E3", done:"G3"}  // 購置大型巴士
 ];
-const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v5";
+const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v6";
 const liveStatusEl = document.getElementById("syncStatus");
 const setLiveStatus = message => { if (liveStatusEl) liveStatusEl.textContent = message; };
 const normLiveDate = value => {
@@ -629,8 +632,7 @@ async function syncLiveProgress() {
   let previous = "";
   try { previous = localStorage.getItem(LIVE_CACHE_KEY) || ""; } catch (e) {}
   const perProject = projects.map(project => `${project.short} ${project.done}/${project.total}`).join("、");
-  const busSourceNote = "；大型巴士專案暫顯示目前工作表快照，尚未納入公開鏡像";
-  setLiveStatus(`已同步 ${new Date().toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit"})}（${perProject}；前五項每 5 分鐘更新${busSourceNote}${ok < LIVE_TABS.length ? "；部分分頁讀取失敗" : ""}）。`);
+  setLiveStatus(`已同步 ${new Date().toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit"})}（${perProject}；每 5 分鐘更新${ok < LIVE_TABS.length ? "；部分分頁讀取失敗" : ""}）。`);
   if (serialized !== previous) {
     try { localStorage.setItem(LIVE_CACHE_KEY,serialized); } catch (e) {}
     location.reload(); return;
