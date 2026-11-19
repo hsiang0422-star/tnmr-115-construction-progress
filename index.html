@@ -1085,47 +1085,61 @@ function init3D(){
     }));
     group.add(terrain);
 
-    // Layered sandstone shelves give each project island the stepped profile of a floating cascade island.
+    // Five offset sedimentary shelves form the stepped, tapering cliff profile of a floating cascade island.
     const strata = [
-      { top:0.98, bottom:0.84, height:6.0, y:top * 0.56 - 3.0, color:dark ? 0x69747b : 0xa79070 },
-      { top:0.85, bottom:0.70, height:5.5, y:top * 0.34 - 4.0, color:dark ? 0x59666e : 0x927b61 },
-      { top:0.71, bottom:0.54, height:5.0, y:top * 0.16 - 4.5, color:dark ? 0x778189 : 0xb19b7d },
-      { top:0.55, bottom:0.16, height:20, y:-9, color:dark ? 0x4e5c65 : 0x766c61 }
+      { top:0.98, bottom:0.85, height:5.8, y:top * 0.58 - 2.9, color:dark ? 0x69747b : 0xa9906f },
+      { top:0.88, bottom:0.76, height:4.4, y:top * 0.43 - 4.0, color:dark ? 0x59666e : 0x927a5f },
+      { top:0.79, bottom:0.64, height:5.0, y:top * 0.29 - 4.5, color:dark ? 0x778189 : 0xb29a76 },
+      { top:0.67, bottom:0.49, height:5.4, y:top * 0.13 - 5.0, color:dark ? 0x626e76 : 0x85745e },
+      { top:0.52, bottom:0.14, height:22, y:-10, color:dark ? 0x4e5c65 : 0x716657 }
     ];
     strata.forEach((layer, index) => {
       const rock = new THREE.Mesh(
-        new THREE.CylinderGeometry(r * layer.top, r * layer.bottom, layer.height, 16, 2, false),
-        surface({ color:layer.color, roughness:0.92, flatShading:true })
+        new THREE.CylinderGeometry(r * layer.top, r * layer.bottom, layer.height, 18, 2, false),
+        surface({ color:layer.color, roughness:0.9, flatShading:true })
       );
       rock.position.y = layer.y;
-      rock.rotation.y = seed * 0.31 + index * 0.09;
-      rock.scale.set(1 + Math.sin(seed + index) * 0.025, 1, 0.96 + Math.cos(seed + index) * 0.025);
+      rock.rotation.y = seed * 0.31 + index * 0.13;
+      rock.scale.set(1 + Math.sin(seed + index) * 0.03, 1, 0.95 + Math.cos(seed + index) * 0.03);
       group.add(rock);
     });
 
-    // A distinct, narrow waterfall descends from each island's rim into a compact pool.
-    const cascadeAngle = (seed * 2.399963) % (Math.PI * 2);
-    const fallTop = Math.max(6, top * 0.5);
-    const fallHeight = Math.max(16, Math.min(36, fallTop + 10));
+    // The cascade faces the default map view, with a narrow highlight to keep the falling water legible.
+    const cascadeAngle = 0.52 + Math.sin(seed * 0.8) * 0.16;
+    const fallTop = Math.max(7, top * 0.58);
+    const fallHeight = Math.max(18, Math.min(38, fallTop + 12));
+    const fallRadius = r * 1.01;
     const waterMat = surface({
-      color:dark ? 0x5e91a0 : 0x5595a8, roughness:0.34, metalness:0.12,
-      transparent:true, opacity:0.76, side:THREE.DoubleSide, depthWrite:false,
-      emissive:dark ? 0x173745 : 0x1c4853, emissiveIntensity:0.1
+      color:dark ? 0x5592a4 : 0x348ca5, roughness:0.3, metalness:0.12,
+      transparent:true, opacity:0.86, side:THREE.DoubleSide, depthWrite:false,
+      emissive:dark ? 0x173745 : 0x1c4853, emissiveIntensity:0.12
     });
-    const waterfall = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.12, fallHeight, 2, 10), waterMat);
+    const waterfall = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.14, fallHeight, 3, 14), waterMat);
     waterfall.position.set(
-      Math.cos(cascadeAngle) * r * 0.92,
+      Math.cos(cascadeAngle) * fallRadius,
       fallTop - fallHeight / 2,
-      Math.sin(cascadeAngle) * r * 0.92
+      Math.sin(cascadeAngle) * fallRadius
     );
     waterfall.rotation.y = Math.PI / 2 - cascadeAngle;
     group.add(waterfall);
 
-    const pool = new THREE.Mesh(
-      new THREE.CylinderGeometry(r * 0.18, r * 0.18, 0.32, 28, 1),
-      surface({ color:dark ? 0x44798d : 0x47879b, roughness:0.38, metalness:0.14 })
+    const waterHighlight = new THREE.Mesh(
+      new THREE.PlaneGeometry(r * 0.026, fallHeight * 0.92, 1, 12),
+      surface({ color:dark ? 0x9bbcc4 : 0xa7d1d8, roughness:0.26, transparent:true, opacity:0.48, side:THREE.DoubleSide, depthWrite:false })
     );
-    pool.position.set(Math.cos(cascadeAngle) * r * 0.72, 0.22, Math.sin(cascadeAngle) * r * 0.72);
+    waterHighlight.position.set(
+      Math.cos(cascadeAngle) * (fallRadius + 0.08),
+      fallTop - fallHeight / 2,
+      Math.sin(cascadeAngle) * (fallRadius + 0.08)
+    );
+    waterHighlight.rotation.y = Math.PI / 2 - cascadeAngle;
+    group.add(waterHighlight);
+
+    const pool = new THREE.Mesh(
+      new THREE.CylinderGeometry(r * 0.16, r * 0.18, 0.38, 32, 1),
+      surface({ color:dark ? 0x44798d : 0x34839b, roughness:0.34, metalness:0.13 })
+    );
+    pool.position.set(Math.cos(cascadeAngle) * r * 0.91, 0.24, Math.sin(cascadeAngle) * r * 0.91);
     group.add(pool);
 
     return { group, base:terrain, land:terrain, top };
