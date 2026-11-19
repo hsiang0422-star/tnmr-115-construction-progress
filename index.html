@@ -227,15 +227,15 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   </header>
 
   <div class="stats">
-    <div class="stat"><div class="k">整體完成度</div><div class="v" id="overallPct">50.0%</div></div>
-    <div class="stat"><div class="k">已完成／總任務</div><div class="v" id="completedTasks">37 / 74</div></div>
+    <div class="stat"><div class="k">整體完成度</div><div class="v" id="overallPct">45.1%</div></div>
+    <div class="stat"><div class="k">已完成／總任務</div><div class="v" id="completedTasks">41 / 91</div></div>
     <div class="stat"><div class="k">執行中工程</div><div class="v" id="inProgressCount">4 項</div></div>
   </div>
 
   <div class="stage" id="stage">
     <div class="labels" id="labels"></div>
     <div class="ctrl" id="ctrl">
-      <div class="chead" title="拖曳移動，雙擊回到原位"><span>地圖操作</span><button class="cmin" id="cMin" type="button">收合</button></div>
+      <div class="chead" title="拖曳移動，雙擊回到原位"><span>地圖操作</span><button class="cmin" id="cMin" type="button" aria-expanded="false">展開</button></div>
       <div class="cbody">
         <h3>平移（按住連續移動）</h3>
         <div class="pad">
@@ -1375,12 +1375,15 @@ function init3D(){
 
   // 地圖操作 panel: hold a button to keep moving, turning, tilting or zooming
   const ctrl = document.getElementById("ctrl");
-  if (window.matchMedia("(max-width: 760px)").matches) ctrl.classList.add("min");
+  // Keep the map unobstructed at first so all five project islands are visible.
+  ctrl.classList.add("min");
   const cMin = document.getElementById("cMin");
+  cMin.setAttribute("aria-expanded","false");
   cMin.addEventListener("click", () => {
     const on = !ctrl.classList.contains("min");
     ctrl.classList.toggle("min", on);
     cMin.textContent = on ? "展開" : "收合";
+    cMin.setAttribute("aria-expanded",String(!on));
   });
   const manualStep = (fn) => {           // any manual control takes over from the preset views
     if (viewMode !== "free") setView("free");
