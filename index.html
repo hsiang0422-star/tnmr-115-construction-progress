@@ -7,19 +7,19 @@
 <style>
 :root{
   color-scheme: light;
-  --sea:#edf2f6; --sand:#e8e3d8; --land:#476d68; --warm:#c58a4b; --jiang:#2d6875; --brick:#8e5a4f;
-  --ink:#203448; --muted:#617487; --card:#ffffff; --line:#ced8e1;
+  --sea:#e8f4fb; --sand:#e7e4dc; --land:#3f776e; --warm:#bd8749; --jiang:#176f94; --brick:#86564c;
+  --ink:#17364d; --muted:#587286; --card:#ffffff; --line:#c5dce9;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --sea:#182635; --sand:#4a4b48; --land:#9bb8aa; --warm:#d9ae77; --jiang:#79b3b4; --brick:#bd8476;
-    --ink:#e8edf2; --muted:#aab7c4; --card:#223547; --line:#3a5062;
+    --sea:#152c40; --sand:#4a4b48; --land:#a5c7b4; --warm:#dfb46f; --jiang:#83c7d2; --brick:#bd8476;
+    --ink:#eaf2f7; --muted:#b5c6d2; --card:#20384b; --line:#3b5b70;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"]{
-  --sea:#182635; --sand:#4a4b48; --land:#9bb8aa; --warm:#d9ae77; --jiang:#79b3b4; --brick:#bd8476;
-  --ink:#e8edf2; --muted:#aab7c4; --card:#223547; --line:#3a5062;
+  --sea:#152c40; --sand:#4a4b48; --land:#a5c7b4; --warm:#dfb46f; --jiang:#83c7d2; --brick:#bd8476;
+  --ink:#eaf2f7; --muted:#b5c6d2; --card:#20384b; --line:#3b5b70;
   color-scheme: dark;
 }
 *{box-sizing:border-box}
@@ -815,12 +815,12 @@ function init3D(){
   const dark = document.documentElement.dataset.theme === "dark" ||
     (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
   const P = dark
-    ? { sky:0x182635, sea:0x263f55, sand:0x777567, land:0x85aa9b, hub:0x69aeb1, warm:0xd9ae77,
-        bridge:0x71818e, bld:0xd7e0e7, pole:0x9daab4, blue:0x75a6c7, roof:0x9c6559, door:0x514b48,
-        grass:0x60846d, leaf:0x72977a, trunk:0x65594e, play:0xb7a06b, track:0x9b7466 }
-    : { sky:0xd7e2eb, sea:0x96adbd, sand:0xb6ad97, land:0x547f70, hub:0x286c78, warm:0xc58a4b,
-        bridge:0x778896, bld:0xe7ecef, pole:0x8293a0, blue:0x397393, roof:0x985c50, door:0x66584d,
-        grass:0x638361, leaf:0x4f7857, trunk:0x77634f, play:0xc5a65f, track:0xa06e5e };
+    ? { sky:0x152c40, sea:0x234c67, sand:0x777567, land:0x85aa9b, hub:0x69aeb1, warm:0xdfb46f,
+        bridge:0x71818e, bld:0xe0e8ee, pole:0xaab8c2, blue:0x75a6c7, roof:0x9c6559, door:0x514b48,
+        grass:0x60846d, leaf:0x72977a, trunk:0x65594e, play:0xc4a965, track:0x9b7466 }
+    : { sky:0x85c9f2, sea:0x4fa8d7, sand:0xc4b79a, land:0x67a98d, hub:0x2d8298, warm:0xc58a4b,
+        bridge:0x8a9aa5, bld:0xf1f5f6, pole:0x8293a0, blue:0x3785ae, roof:0x985c50, door:0x66584d,
+        grass:0x78a96b, leaf:0x60935f, trunk:0x77634f, play:0xcbb16d, track:0xa06e5e };
 
   const ASPHALT = dark ? 0x4b5563 : 0x8b96a3;
   const renderer = new THREE.WebGLRenderer({ antialias:true });
@@ -836,10 +836,10 @@ function init3D(){
   const target = new THREE.Vector3(0, 8, 0);
   const desired = new THREE.Vector3(0, 8, 0);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 1.1);
+  const ambient = new THREE.AmbientLight(0xffffff, 1.22);
   scene.add(ambient);
   const allLamps = [];
-  const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+  const sun = new THREE.DirectionalLight(0xffffff, 1.48);
   sun.position.set(200, 400, 150);
   scene.add(sun);
 
@@ -850,14 +850,14 @@ function init3D(){
 
   // Cloud sea: cool atmospheric surface with restrained cloud banks.
   const seaGeo = new THREE.PlaneGeometry(1600, 1600, 80, 80);
-  const sea = new THREE.Mesh(seaGeo, surface({ color:0x96adbd, roughness:0.84, metalness:0.025, flatShading:false }));
+  const sea = new THREE.Mesh(seaGeo, surface({ color:0x4fa8d7, roughness:0.68, metalness:0.08, flatShading:false }));
   sea.rotation.x = -Math.PI / 2;
   scene.add(sea);
 
   const cloudGeo = new THREE.SphereGeometry(1, 14, 10);
   const cloudMat = surface({
-    color:0xe5ebef, roughness:0.9, transparent:true, opacity:0.58, depthWrite:false,
-    emissive:0x8093a2, emissiveIntensity:0.025
+    color:0xf7fcff, roughness:0.86, transparent:true, opacity:0.86, depthWrite:false,
+    emissive:0xc5e1f2, emissiveIntensity:0.045
   });
   const cloudBanks = [];
   const cloudAnchors = [
@@ -898,9 +898,9 @@ function init3D(){
 
   // three sky presets: 黑夜 (night), 下午 (afternoon), 白天 (day)
   const SKIES = {
-    day:       { sky:0xd7e2eb, sea:0x96adbd, cloud:0xe8edf1, sun:0xffffff, sunI:1.25, sunPos:[200,400,150],   amb:1.0 },
-    afternoon: { sky:0xd8cfc3, sea:0x9f9b99, cloud:0xe3dbd1, sun:0xf2d1a0, sunI:1.15, sunPos:[320,170,140], amb:0.92 },
-    night:     { sky:0x182635, sea:0x263f55, cloud:0x667a8c, sun:0x91a8bc, sunI:0.5,  sunPos:[-200,300,-150], amb:0.58 }
+    day:       { sky:0x85c9f2, sea:0x4fa8d7, cloud:0xf7fcff, sun:0xffffff, sunI:1.5,  sunPos:[200,400,150],   amb:1.2 },
+    afternoon: { sky:0xeabf9e, sea:0x5c9ec1, cloud:0xfff0df, sun:0xffd89f, sunI:1.3, sunPos:[320,170,140], amb:1.05 },
+    night:     { sky:0x152c40, sea:0x234c67, cloud:0x91a8bc, sun:0xb8d4e4, sunI:0.58, sunPos:[-200,300,-150], amb:0.68 }
   };
   const skyButtons = [...document.querySelectorAll(".tbtn[data-sky]")];
   let curSky = "day";
@@ -1110,7 +1110,7 @@ function init3D(){
     const fallHeight = Math.max(18, Math.min(38, fallTop + 12));
     const fallRadius = r * 1.01;
     const waterMat = surface({
-      color:dark ? 0x5592a4 : 0x348ca5, roughness:0.3, metalness:0.12,
+      color:dark ? 0x66b4c6 : 0x2f9cc2, roughness:0.3, metalness:0.12,
       transparent:true, opacity:0.86, side:THREE.DoubleSide, depthWrite:false,
       emissive:dark ? 0x173745 : 0x1c4853, emissiveIntensity:0.12
     });
@@ -1137,7 +1137,7 @@ function init3D(){
 
     const pool = new THREE.Mesh(
       new THREE.CylinderGeometry(r * 0.16, r * 0.18, 0.38, 32, 1),
-      surface({ color:dark ? 0x44798d : 0x34839b, roughness:0.34, metalness:0.13 })
+      surface({ color:dark ? 0x4b91a7 : 0x3c9db8, roughness:0.34, metalness:0.13 })
     );
     pool.position.set(Math.cos(cascadeAngle) * r * 0.91, 0.24, Math.sin(cascadeAngle) * r * 0.91);
     group.add(pool);
