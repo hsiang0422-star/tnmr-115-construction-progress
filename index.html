@@ -460,7 +460,8 @@ const liveCellText = cell => {
   if (!cell) return "";
   const value = cell.v;
   if (typeof value === "string" && value.startsWith("Date(")) return normLiveDate(value) || "";
-  if (value === null || value === undefined) return cell.f ?? "";
+  if (cell.f !== null && cell.f !== undefined && String(cell.f).trim() !== "") return String(cell.f);
+  if (value === null || value === undefined) return "";
   return String(value);
 };
 const liveGvizRows = table => (table.rows || []).map(row => (row.c || []).map(liveCellText));
@@ -495,9 +496,15 @@ function applyLiveRows(projectIndex, rows) {
     const id = String(row[0] ?? "").trim();
     if (!/^\d+\.\d+$/.test(id) || seen.has(id)) return;
     seen.add(id);
-    const rawStatus = String(row[9] ?? "").trim();
+    const rawStatus = String(row[9] ?? "").trim().replace(/[：:]$/, "");
     if (rawStatus === "不適用" && !String(row[10] ?? "").trim()) return;
-    const status = ({ "已完成":"done", "進行中":"doing", "流標":"stop", "未開始":"todo", "不適用":"na" })[rawStatus] || (rawStatus ? null : "todo");
+    const status = ({
+      "已完成":"done", "done":"done", "完成":"done",
+      "進行中":"doing", "doing":"doing", "施工中":"doing",
+      "流標":"stop", "stop":"stop",
+      "未開始":"todo", "todo":"todo",
+      "不適用":"na", "na":"na"
+    })[rawStatus] || (rawStatus ? null : "todo");
     if (!status) return;
     tasks.push([
       String(row[1] ?? "").trim(),
@@ -507,7 +514,8 @@ function applyLiveRows(projectIndex, rows) {
     ]);
   });
   if (!tasks.length) return false;
-  project.done = done ?? tasks.filter(task => task[7] === "done").length;
+  const taskDone = tasks.filter(task => task[7] === "done").length;
+  project.done = done === 0 && taskDone > 0 ? taskDone : (done ?? taskDone);
   project.total = total ?? tasks.length;
   project.pct = +(project.done / project.total * 100).toFixed(1);
   project.status = tasks.some(task => task[7] === "doing") ? "進行中" :
@@ -583,7 +591,8 @@ async function syncLiveProgress() {
   const serialized = JSON.stringify(fresh);
   let previous = "";
   try { previous = localStorage.getItem(LIVE_CACHE_KEY) || ""; } catch (e) {}
-  setLiveStatus(`已同步 ${new Date().toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit"})}（每 5 分鐘更新${ok < LIVE_TABS.length ? "；部分分頁讀取失敗" : ""}）。`);
+  const perProject = projects.map(project => `${project.short} ${project.done}/${project.total}`).join("、");
+  setLiveStatus(`已同步 ${new Date().toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit"})}（${perProject}；每 5 分鐘更新${ok < LIVE_TABS.length ? "；部分分頁讀取失敗" : ""}）。`);
   if (serialized !== previous) {
     try { localStorage.setItem(LIVE_CACHE_KEY,serialized); } catch (e) {}
     location.reload(); return;
