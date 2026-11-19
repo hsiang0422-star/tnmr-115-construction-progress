@@ -1436,24 +1436,16 @@ function init3D(){
     scatterDecor(o.group, p.r, o.top, i + 1, allLamps);
     scene.add(o.group);
 
-    // bridge from hub edge to island edge
+    // A gently arcing centerline makes the island connection read as a curved road.
     const dx = p.pos[0] - hub.pos[0], dz = p.pos[1] - hub.pos[1];
     const dist = Math.hypot(dx, dz);
     const ux = dx / dist, uz = dz / dist;
     const start = hub.r * 0.9, end = dist - p.r * 0.9;
     const len = end - start;
-    const bridge = new THREE.Mesh(
-      new THREE.BoxGeometry(len, 3, 12),
-      new THREE.MeshStandardMaterial({ color:P.bridge, roughness:0.8 })
-    );
-    const mx = hub.pos[0] + ux * (start + len / 2);
-    const mz = hub.pos[1] + uz * (start + len / 2);
-    bridge.position.set(mx, 5, mz);
-    bridge.rotation.y = -Math.atan2(dz, dx);
-    scene.add(bridge);
     bridges.push({
       ax: hub.pos[0] + ux * start, az: hub.pos[1] + uz * start,
-      bx: hub.pos[0] + ux * end,   bz: hub.pos[1] + uz * end
+      bx: hub.pos[0] + ux * end,   bz: hub.pos[1] + uz * end,
+      bend: (i % 2 === 0 ? 1 : -1) * Math.min(22, len * 0.14)
     });
 
     const tag = document.createElement("div");
@@ -1464,29 +1456,81 @@ function init3D(){
     return { o, tag, x:p.pos[0], z:p.pos[1], top:o.top };
   });
 
-  // Tainan heritage touches along the roads: a red-brick arch gate (安平古堡 style) and stone lanterns (石燈籠)
-  const brickMat = new THREE.MeshStandardMaterial({ color:0xb8583c, roughness:0.9 });
-  const stoneMat = new THREE.MeshStandardMaterial({ color:0xd9d2c3, roughness:0.95 });
+  // Curved paved roads inspired by Meshy's "Curved Road Fixed" model.
+  // Each road has a gently raised bridge deck, natural arc, pale shoulders,
+  // asphalt, painted edges, a broken center line, and quiet concrete curbs.
+  const roadDeckMat = surface({ color:dark ? 0x73818a : 0xd1d3cd, roughness:0.96 });
+  const roadMat = surface({ color:ASPHALT, roughness:0.98 });
+  const roadLineMat = surface({ color:dark ? 0xf4e4b8 : 0xf8f5e9, roughness:0.9 });
+  const centerLineMat = surface({ color:dark ? 0xf1ca78 : 0xe6b751, roughness:0.9 });
+  const curbMat = surface({ color:dark ? 0xa4b0b4 : 0xb7c4c5, roughness:0.9 });
+
+  function addRoadStrip(curve, width, lateral, height, material, from = 0, to = 1, segments = 96){
+    const positions = [], indices = [];
+    for (let i = 0; i <= segments; i++){
+      const t = from + (to - from) * i / segments;
+      const center = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t);
+      const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+      center.y += height;
+      center.addScaledVector(side, lateral);
+      const left = center.clone().addScaledVector(side, width / 2);
+      const right = center.clone().addScaledVector(side, -width / 2);
+      positions.push(left.x, left.y, left.z, right.x, right.y, right.z);
+      if (i < segments){
+        const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+        indices.push(a, c, b, b, c, d);
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.material.side = THREE.DoubleSide;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    return mesh;
+  }
+
   bridges.forEach(br => {
     const dx = br.bx - br.ax, dz = br.bz - br.az;
-    const road = new THREE.Group();
-    road.position.set((br.ax + br.bx) / 2, 6.5, (br.az + br.bz) / 2);
-    road.rotation.y = -Math.atan2(dz, dx);
-    scene.add(road);
-    const gate = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); road.add(m); return m; };
-    // arch gate across the road: two piers, a half-round arch and a lintel
-    gate(new THREE.BoxGeometry(3.2, 7, 3.2), brickMat, 0, 3.5, -8);
-    gate(new THREE.BoxGeometry(3.2, 7, 3.2), brickMat, 0, 3.5, 8);
-    const arch = gate(new THREE.TorusGeometry(8, 1.1, 8, 20, Math.PI), brickMat, 0, 7, 0);
-    arch.rotation.y = Math.PI / 2;
-    gate(new THREE.BoxGeometry(3.6, 1.6, 19.6), brickMat, 0, 16.6, 0);
-    // stone lanterns on both sides of the road
-    [-14, 14].forEach(x => [-7.5, 7.5].forEach(z => {
-      gate(new THREE.CylinderGeometry(1.5, 1.8, 1.4, 8), stoneMat, x, 0.7, z);      // base
-      gate(new THREE.CylinderGeometry(0.6, 0.8, 4.2, 6), stoneMat, x, 3.5, z);      // column
-      gate(new THREE.BoxGeometry(2.6, 1.6, 2.6), stoneMat, x, 6.2, z);              // lantern box
-      gate(new THREE.ConeGeometry(2.0, 1.4, 4), stoneMat, x, 7.6, z).rotation.y = Math.PI / 4; // roof
-    }));
+    const length = Math.hypot(dx, dz);
+    const sideX = -dz / length, sideZ = dx / length;
+    const lift = t => 6.4 + Math.sin(Math.PI * t) * 2.4;
+    const point = (t, offset) => new THREE.Vector3(
+      br.ax + dx * t + sideX * offset,
+      lift(t),
+      br.az + dz * t + sideZ * offset
+    );
+    br.curve = new THREE.CatmullRomCurve3([
+      point(0, 0), point(0.32, br.bend), point(0.68, br.bend), point(1, 0)
+    ], false, "centripetal");
+    // Broad light shoulders make the dark asphalt curve read clearly from above.
+    addRoadStrip(br.curve, 21, 0, -0.95, roadDeckMat, 0, 1, 100);
+    addRoadStrip(br.curve, 15.2, 0, -0.34, roadMat, 0, 1, 100);
+    [-7.15, 7.15].forEach(side => {
+      addRoadStrip(br.curve, 0.48, side, -0.08, roadLineMat, 0, 1, 100);
+      addRoadStrip(br.curve, 0.82, side * 1.31, 0.05, curbMat, 0, 1, 100);
+    });
+    // Short, evenly spaced center dashes follow the bend instead of staying straight.
+    for (let t = 0.025; t < 0.98; t += 0.055){
+      addRoadStrip(br.curve, 0.42, 0, -0.06, centerLineMat, t, Math.min(t + 0.028, 1), 4);
+    }
+    // Concrete piers give the raised road a believable connection over the sea.
+    [0.18, 0.42, 0.66, 0.84].forEach(t => {
+      const p = br.curve.getPointAt(t);
+      const h = Math.max(2, p.y - 2);
+      const pier = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.4, 3.6, h, 8),
+        curbMat
+      );
+      pier.position.set(p.x, h / 2, p.z);
+      pier.castShadow = true;
+      pier.receiveShadow = true;
+      scene.add(pier);
+    });
   });
 
   const movers = [];
@@ -1849,8 +1893,11 @@ function init3D(){
       const s = (((m.s0 + t * m.speed) % 1) + 1) % 1;
       const u = m.dir > 0 ? s : 1 - s;
       const b = m.br;
-      m.car.position.set(b.ax + (b.bx - b.ax) * u, 8.15, b.az + (b.bz - b.az) * u);
-      m.car.rotation.y = Math.atan2(-(b.bz - b.az) * m.dir, (b.bx - b.ax) * m.dir);
+      const point = b.curve.getPointAt(u);
+      const tangent = b.curve.getTangentAt(u);
+      m.car.position.copy(point);
+      m.car.position.y += 1.65;
+      m.car.rotation.y = Math.atan2(-tangent.z * m.dir, tangent.x * m.dir);
     });
 
     spoonbills.forEach(sb => {
