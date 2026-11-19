@@ -440,7 +440,13 @@ const LIVE_TABS = [
   "跑道改建工程(1150907修)",
   "共融遊具改建工程(1150907修)"
 ];
-const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v2";
+const LIVE_SUMMARY_CELLS = [
+  {total:"E3", done:"G3"}, // 無障礙斜坡道
+  {total:"F3", done:"I3"}, // 性別友善廁所
+  {total:"E3", done:"G3"}, // 跑道
+  {total:"E3", done:"G3"}  // 共融遊具
+];
+const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v3";
 const liveStatusEl = document.getElementById("syncStatus");
 const setLiveStatus = message => { if (liveStatusEl) liveStatusEl.textContent = message; };
 const normLiveDate = value => {
@@ -481,7 +487,7 @@ function loadLiveGviz(sheetName, range) {
     document.head.appendChild(script);
   });
 }
-function applyLiveRows(projectIndex, rows) {
+function applyLiveRows(projectIndex, rows, summary = {}) {
   const project = projects[projectIndex];
   let total = null, done = null;
   rows.slice(0, 8).forEach(row => row.forEach((value, column) => {
@@ -490,6 +496,8 @@ function applyLiveRows(projectIndex, rows) {
     if (label === "總任務數" && Number.isFinite(numeric) && numeric > 0) total = numeric;
     if (label === "已完成" && Number.isFinite(numeric) && numeric >= 0) done = numeric;
   }));
+  if (Number.isFinite(summary.total) && summary.total > 0) total = summary.total;
+  if (Number.isFinite(summary.done) && summary.done >= 0) done = summary.done;
   const tasks = [];
   const seen = new Set();
   rows.forEach(row => {
@@ -570,12 +578,18 @@ try { applyLiveSnapshot(JSON.parse(localStorage.getItem(LIVE_CACHE_KEY) || "null
 renderHubStats();
 async function syncLiveProgress() {
   const results = await Promise.allSettled(LIVE_TABS.map(async (tab,index) => {
-    const [summary3, summary4, body] = await Promise.all([
-      loadLiveGviz(tab,"A3:K3").catch(() => []),
-      loadLiveGviz(tab,"A4:K4").catch(() => []),
+    const cells = LIVE_SUMMARY_CELLS[index];
+    const [totalRow, doneRow, body] = await Promise.all([
+      loadLiveGviz(tab,cells.total),
+      loadLiveGviz(tab,cells.done),
       loadLiveGviz(tab,"A1:K70")
     ]);
-    return applyLiveRows([0,1,2,3][index], [...summary3,...summary4,...body]);
+    const readCount = rows => {
+      const value = rows?.[0]?.[0];
+      const number = Number(String(value ?? "").replace(/,/g,""));
+      return Number.isFinite(number) ? number : null;
+    };
+    return applyLiveRows(index,body,{total:readCount(totalRow),done:readCount(doneRow)});
   }));
   const ok = results.filter(result => result.status === "fulfilled" && result.value).length;
   if (!ok) {
