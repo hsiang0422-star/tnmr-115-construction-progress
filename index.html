@@ -447,7 +447,7 @@ const normLiveDate = value => {
   const text = String(value ?? "").trim();
   let m = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
   if (!m) {
-    m = text.match(/^Date\\((\d+),(\d+),(\d+)\\)$/);
+    m = text.match(/^Date\((\d+),(\d+),(\d+)\)$/);
     if (m) return `${m[1]}-${String(+m[2]+1).padStart(2,"0")}-${String(+m[3]).padStart(2,"0")}`;
     return null;
   }
@@ -490,7 +490,7 @@ function applyLiveRows(projectIndex, rows) {
   const seen = new Set();
   rows.forEach(row => {
     const id = String(row[0] ?? "").trim();
-    if (!/^\d+\\.\d+$/.test(id) || seen.has(id)) return;
+    if (!/^\d+\.\d+$/.test(id) || seen.has(id)) return;
     seen.add(id);
     const rawStatus = String(row[9] ?? "").trim();
     if (rawStatus === "不適用" && !String(row[10] ?? "").trim()) return;
