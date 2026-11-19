@@ -440,7 +440,7 @@ const LIVE_TABS = [
   "跑道改建工程(1150907修)",
   "共融遊具改建工程(1150907修)"
 ];
-const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v1";
+const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v2";
 const liveStatusEl = document.getElementById("syncStatus");
 const setLiveStatus = message => { if (liveStatusEl) liveStatusEl.textContent = message; };
 const normLiveDate = value => {
@@ -453,6 +453,9 @@ const normLiveDate = value => {
   }
   return `${m[1]}-${m[2].padStart(2,"0")}-${m[3].padStart(2,"0")}`;
 };
+const escapeLiveHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+  "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+}[char]));
 const liveCellText = cell => {
   if (!cell) return "";
   const value = cell.v;
@@ -500,7 +503,7 @@ function applyLiveRows(projectIndex, rows) {
       String(row[1] ?? "").trim(),
       String(row[2] ?? "").trim(),
       String(row[3] ?? "").trim(),
-      normLiveDate(row[5]), normLiveDate(row[6]), normLiveDate(row[7]), normLiveDate(row[8]), status
+      normLiveDate(row[5]), normLiveDate(row[6]), normLiveDate(row[7]), normLiveDate(row[8]), status, String(row[10] ?? "").trim()
     ]);
   });
   if (!tasks.length) return false;
@@ -635,7 +638,7 @@ function ganttHTML(idx){
   let html = `<div class="gantt">
     <div class="g-row head"><div class="g-axis-track">${axisTicks}</div></div>`;
   let lastPhase = "";
-  list.forEach(([phase, name, owner, ps, pe, as, ae, st]) => {
+  list.forEach(([phase, name, owner, ps, pe, as, ae, st, taskNote]) => {
     if (phase !== lastPhase){ html += `<div class="g-phase">${phase}</div>`; lastPhase = phase; }
     let bars = "";
     if (ps && pe){
@@ -650,11 +653,11 @@ function ganttHTML(idx){
     const plan = ps ? `${ps.replace(/-/g, "/")}～${pe.replace(/-/g, "/")}` : "";
     const actual = as ? `　實際 ${as.replace(/-/g, "/")}${ae ? "～" + ae.replace(/-/g, "/") : "～"}` : "";
     html += `<div class="g-row">
-      <div class="g-label">${name}<small>${owner}・${STATUS_LABEL[st]}</small><small>${plan}${actual}</small></div>
+      <div class="g-label">${name}<small>${owner}・${STATUS_LABEL[st]}</small><small>${plan}${actual}</small>${taskNote ? `<small class="g-task-note">備註：${escapeLiveHtml(taskNote)}</small>` : ""}</div>
       <div class="g-track">${grid}${bars}<div class="g-today" style="left:${todayLeft}%"></div></div>
     </div>`;
   });
-  return `<p class="g-note">資料依試算表「(1150907修)」工作表整理，為匯出時的快照；未經同步，請以原始試算表為準。</p>` + html + "</div>";
+  return `<p class="g-note">任務備註依工程試算表 K 欄「備註說明」顯示；進度資料定期同步更新。</p>` + html + "</div>";
 }
 
 // legend for the Gantt chart; shown in the fixed header of the popup
