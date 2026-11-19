@@ -1102,6 +1102,41 @@ function init3D(){
       vertexColors:true, roughness:1, flatShading:true, bumpScale:0.18
     }));
     group.add(terrain);
+
+    // Felted floating-island cliffs, inspired by Three.js terrain/fog demos and Meshy island dioramas.
+    // A tapered wool-rock underside makes each project island read as a small suspended landscape.
+    const cliffFelt = felt({
+      color:dark ? 0x8b829d : 0xc9957f,
+      roughness:1, flatShading:true, bumpScale:0.2
+    });
+    const cliff = new THREE.Mesh(
+      new THREE.CylinderGeometry(r * 0.78, r * 0.14, 34, 18, 3, false),
+      cliffFelt
+    );
+    cliff.position.y = -7;
+    cliff.rotation.y = seed * 0.31;
+    group.add(cliff);
+
+    const ledge = new THREE.Mesh(
+      new THREE.CylinderGeometry(r * 0.79, r * 0.68, 5, 18, 1, false),
+      felt({ color:dark ? 0xa59ab3 : 0xe2b49a, roughness:1, flatShading:true, bumpScale:0.16 })
+    );
+    ledge.position.y = -4;
+    ledge.rotation.y = seed * 0.31;
+    group.add(ledge);
+
+    // Tiny rounded boulders soften the cliff edge and echo the handmade diorama look.
+    const pebbleMats = [
+      felt({ color:dark ? 0xa99ab5 : 0xd9aa8e, roughness:1, flatShading:true }),
+      felt({ color:dark ? 0x7c91a6 : 0xb77f76, roughness:1, flatShading:true })
+    ];
+    for (let i = 0; i < 7; i++){
+      const a = (i / 7) * Math.PI * 2 + seed * 0.37;
+      const pebble = new THREE.Mesh(new THREE.DodecahedronGeometry(r * (0.075 + (i % 3) * 0.012), 0), pebbleMats[i % 2]);
+      pebble.position.set(Math.cos(a) * r * 0.55, -10 + (i % 2) * 3, Math.sin(a) * r * 0.55);
+      pebble.scale.set(1, 0.72, 0.86);
+      group.add(pebble);
+    }
     return { group, base:terrain, land:terrain, top };
   }
 
