@@ -213,7 +213,7 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   <header>
     <p class="eyebrow">國立臺南特殊教育學校｜總務處</p>
     <h1>工程追蹤3D島嶼</h1>
-    <p class="sub">總務處居中，五座工程島環繞相連。陸地愈高，完成度愈高。</p>
+    <p class="sub">總務處居中，六座工程島環繞相連。陸地愈高，完成度愈高。</p>
     <svg class="wave" viewBox="0 0 980 28" preserveAspectRatio="none" aria-hidden="true">
       <path d="M0 14 Q 40 2 80 14 T 160 14 T 240 14 T 320 14 T 400 14 T 480 14 T 560 14 T 640 14 T 720 14 T 800 14 T 880 14 T 980 14" fill="none" stroke="var(--jiang)" stroke-width="2.5" opacity=".7"/>
       <path d="M0 22 Q 40 12 80 22 T 160 22 T 240 22 T 320 22 T 400 22 T 480 22 T 560 22 T 640 22 T 720 22 T 800 22 T 880 22 T 980 22" fill="none" stroke="var(--brick)" stroke-width="1.5" opacity=".5"/>
@@ -300,7 +300,7 @@ h1{font-family:"Noto Serif TC",serif;font-size:30px;margin:4px 0 6px;text-wrap:b
   </div>
 
   <p class="foot">
-    五座工程島的任務、進度與甘特圖由原始工程試算表的公開鏡像載入，每 5 分鐘檢查更新；無法連線時保留頁面快照。
+    六座工程島均列出於此；前五項工程由公開鏡像每 5 分鐘同步，大型巴士專案顯示目前讀取的試算表資料，待公開鏡像加入該分頁後即可同步更新。
     <span id="syncStatus" role="status" aria-live="polite">同步中，暫時顯示頁面快照。</span>
     <a href="https://docs.google.com/spreadsheets/d/1ocB5KTsdMfxwsoi3hO2SZsPs2aGNNsGs_efBiMlikzY/edit" target="_blank" rel="noopener">開啟原始工程進度試算表</a>
   </p>
@@ -320,8 +320,8 @@ const TODAY = new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Taipei"}).format(
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const hub = {
-  name:"總務處", pct:45.1, done:41, total:91,
-  note:"115 學年度五項工程整體完成度 45.1%，共 41／91 項任務已完成。點選周圍五座島可查看各工程節點。",
+  name:"總務處", pct:42.0, done:42, total:100,
+  note:"115 學年度六項工程整體完成度 42.0%，共 42／100 項任務已完成。點選周圍六座島可查看各工程節點。",
   pos:[0,0], r:70
 };
 
@@ -346,7 +346,11 @@ const projects = [
   { name:"交通車廊道鋼構工程", short:"交通車廊道鋼構", kind:"corridor", pct:5.9, done:1, total:17, status:"進行中",
     note:"交通車廊道鋼構工程進度依試算表更新，目前招標公告進行中。",
     milestones:[["2026-11-05","招標公告預定完成"],["2026-12-08","基本設計預定完成"],["2027-08-20","付款作業預定完成"]],
-    pos:[0,-190], r:48 }
+    pos:[0,-190], r:48 },
+  { name:"購置大型巴士專案", short:"大型巴士", kind:"bus", pct:11.1, done:1, total:9, status:"進行中",
+    note:"目前進行：底盤進線、立骨架、骨架焊接；內裝及座椅皮革顏色已選定。",
+    milestones:[["2026-12-31","骨架組立、骨架完成"],["2027-01-31","車體鈑金"],["2027-01-31","內裝、座椅安裝及塗裝"]],
+    pos:[0,220], r:50 }
 ];
 
 const TASKS = [
@@ -435,6 +439,18 @@ const TASKS = [
     ["六 驗收與付款","付款作業","事務組、主計室","2026-10-19","2026-10-30",null,null,"todo"]
   ],
   /* 4 交通車廊道鋼構工程 */ [["階段一","計畫預算核定","需求單位、主計室","2026-10-23","2026-10-23","2026-10-23",null,"done",""],["階段二","招標公告","事務組","2026-10-29","2026-11-05","2026-11-03","2026-11-09","doing",""],["階段二","開標","事務組","2026-11-06","2026-11-06",null,null,"todo",""],["階段二","評審會議","事務組","2026-11-06","2026-11-06",null,null,"todo",""],["階段二","議價、決標","事務組","2026-11-09","2026-11-09",null,null,"todo",""],["階段三","基本設計","事務組","2026-11-09","2026-12-08",null,null,"todo",""],["階段三","細部設計","需求單位、事務組","2026-12-10","2027-01-11",null,null,"todo",""],["階段三","圖說修正","事務組","2027-01-12","2027-01-21",null,null,"todo",""],["階段四","招標文件製作","需求單位、事務組",null,null,null,null,"todo",""],["階段四","招標公告","事務組",null,null,null,null,"todo",""],["階段四","開標","需求單位、事務組、主計室、廠商",null,null,null,null,"todo",""],["階段四","決標","需求單位、事務組、主計室、得標廠商",null,null,null,null,"todo",""],["階段五","廠商提送三書","監造單位、得標廠商、事務組",null,null,null,null,"todo",""],["階段五","開工","監造單位、得標廠商、事務組",null,null,null,null,"todo",""],["階段五","竣工確認","監造單位、得標廠商、事務組",null,null,null,null,"todo",""],["階段六","驗收","請購單位、事務組",null,null,null,null,"todo",""],["階段六","付款作業","事務組、主計室",null,null,null,null,"todo",""]]
+  ],
+  /* 5 購置大型巴士專案 */ [
+    ["階段一","底盤進線、立骨架","車體廠","2026-10-01","2026-10-09",null,null,"doing","預計10月初底盤進線並開始立骨架"],
+    ["階段一","骨架焊接","車體廠","2026-10-05","2026-10-31",null,null,"doing","10/14 廠商告知骨架焊接中，待組立"],
+    ["階段一","骨架組立","車體廠","2026-11-02","2026-12-31",null,null,"todo","預計11月初左右開始組立骨架"],
+    ["階段一","骨架完成","車體廠、事務組","2026-12-21","2026-12-31",null,null,"todo","預計12月骨架完成（可安排到廠查驗）"],
+    ["階段二","挑選內裝、座椅皮革顏色","需求單位、事務組、車體廠","2026-10-16","2026-10-16","2026-10-16","2026-10-16","done","10/16 挑選內裝及座椅皮革顏色"],
+    ["階段三","車體鈑金","車體廠","2027-01-01","2027-01-31",null,null,"todo","預計2027年1月鈑金完成"],
+    ["階段四","內裝、座椅安裝及塗裝","車體廠",null,null,null,null,"todo","待廠商提供時程"],
+    ["階段四","交車驗收","需求單位、事務組",null,null,null,null,"todo","待廠商提供時程"],
+    ["階段四","付款作業","事務組、主計室",null,null,null,null,"todo",""]
+  ]
 
 ];
 
@@ -454,7 +470,7 @@ const LIVE_SUMMARY_CELLS = [
   {total:"E3", done:"G3"}, // 共融遊具
   {total:"E3", done:"G3"}  // 交通車廊道鋼構
 ];
-const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v4";
+const LIVE_CACHE_KEY = "tnmr-engineering-islands-live-v5";
 const liveStatusEl = document.getElementById("syncStatus");
 const setLiveStatus = message => { if (liveStatusEl) liveStatusEl.textContent = message; };
 const normLiveDate = value => {
@@ -579,7 +595,7 @@ function applyLiveSnapshot(snapshot) {
   const done = projects.reduce((sum,p) => sum + p.done,0);
   const total = projects.reduce((sum,p) => sum + p.total,0);
   hub.done = done; hub.total = total; hub.pct = total ? +(done/total*100).toFixed(1) : 0;
-  hub.note = `五項工程整體完成度 ${hub.pct.toFixed(1)}%，共 ${done}／${total} 項任務已完成。進度由工程試算表同步。`;
+  hub.note = `六項工程整體完成度 ${hub.pct.toFixed(1)}%，共 ${done}／${total} 項任務已完成。進度由工程試算表同步。`;
   renderHubStats();
 }
 try { applyLiveSnapshot(JSON.parse(localStorage.getItem(LIVE_CACHE_KEY) || "null")); } catch (e) {}
@@ -607,14 +623,15 @@ async function syncLiveProgress() {
   const done = projects.reduce((sum,p) => sum + p.done,0);
   const total = projects.reduce((sum,p) => sum + p.total,0);
   hub.done = done; hub.total = total; hub.pct = total ? +(done/total*100).toFixed(1) : 0;
-  hub.note = `五項工程整體完成度 ${hub.pct.toFixed(1)}%，共 ${done}／${total} 項任務已完成。進度由工程試算表同步。`;
+  hub.note = `六項工程整體完成度 ${hub.pct.toFixed(1)}%，共 ${done}／${total} 項任務已完成。進度由工程試算表同步。`;
   renderHubStats();
   const fresh = liveSnapshot();
   const serialized = JSON.stringify(fresh);
   let previous = "";
   try { previous = localStorage.getItem(LIVE_CACHE_KEY) || ""; } catch (e) {}
   const perProject = projects.map(project => `${project.short} ${project.done}/${project.total}`).join("、");
-  setLiveStatus(`已同步 ${new Date().toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit"})}（${perProject}；每 5 分鐘更新${ok < LIVE_TABS.length ? "；部分分頁讀取失敗" : ""}）。`);
+  const busSourceNote = "；大型巴士專案暫顯示目前工作表快照，尚未納入公開鏡像";
+  setLiveStatus(`已同步 ${new Date().toLocaleTimeString("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit"})}（${perProject}；前五項每 5 分鐘更新${busSourceNote}${ok < LIVE_TABS.length ? "；部分分頁讀取失敗" : ""}）。`);
   if (serialized !== previous) {
     try { localStorage.setItem(LIVE_CACHE_KEY,serialized); } catch (e) {}
     location.reload(); return;
@@ -724,7 +741,7 @@ function renderDetail(){
         <div class="bar"><i style="width:${hub.pct}%"></i></div>
       </div>
       <div>
-        <h3 style="margin:0 0 10px;font-size:16px">五座工程島</h3>
+        <h3 style="margin:0 0 10px;font-size:16px">六座工程島</h3>
         <ol class="timeline">${projects.map(p => `<li><span class="d">${p.pct.toFixed(1)}%</span><span class="t">${p.name}</span></li>`).join("")}</ol>
       </div>`;
     return;
@@ -821,42 +838,13 @@ function init3D(){
   sun.position.set(200, 400, 150);
   scene.add(sun);
 
-  // cloud sea: a soft sky-blue surface with floating cloud banks around the islands
+  // sea
   const seaGeo = new THREE.PlaneGeometry(1600, 1600, 80, 80);
   const sea = new THREE.Mesh(seaGeo, new THREE.MeshStandardMaterial({
-    color:0xb8dff0, roughness:0.95, metalness:0, flatShading:false
+    color:P.sea, roughness:0.35, metalness:0.05, flatShading:true
   }));
   sea.rotation.x = -Math.PI / 2;
   scene.add(sea);
-
-  const cloudGeo = new THREE.SphereGeometry(1, 14, 10);
-  const cloudMat = new THREE.MeshStandardMaterial({
-    color:0xf8fdff, roughness:1, transparent:true, opacity:0.9, depthWrite:false,
-    emissive:0x83b9d5, emissiveIntensity:0.08
-  });
-  const cloudBanks = [];
-  const cloudAnchors = [
-    [-270,-250,1.1], [-20,-335,1.0], [270,-250,1.15],
-    [-330,-15,0.95], [330,5,1.0],
-    [-280,245,1.0], [0,330,1.15], [285,250,1.0],
-    [-190,270,0.8], [195,275,0.85]
-  ];
-  const puffLayout = [
-    [0,0,0,1.0], [-28,-1,-7,0.78], [25,1,8,0.82], [-7,2,22,0.68],
-    [10,2,-20,0.76], [-45,-2,9,0.62], [43,0,-9,0.68]
-  ];
-  cloudAnchors.forEach(([x,z,scale], index) => {
-    const bank = new THREE.Group();
-    puffLayout.forEach(([dx,dy,dz,size]) => {
-      const puff = new THREE.Mesh(cloudGeo, cloudMat);
-      puff.scale.set(34 * size * scale, 11 * size * scale, 24 * size * scale);
-      puff.position.set(dx * scale, dy + (index % 3) * 0.45, dz * scale);
-      bank.add(puff);
-    });
-    bank.position.set(x, 2.8 + (index % 2) * 0.8, z);
-    scene.add(bank);
-    cloudBanks.push({ bank, x, z, phase:index * 0.83 });
-  });
 
   // stars for the night sky
   const starPts = [];
@@ -873,9 +861,9 @@ function init3D(){
 
   // three sky presets: 黑夜 (night), 下午 (afternoon), 白天 (day)
   const SKIES = {
-    day:       { sky:0xd9edf6, sea:0xb8dff0, cloud:0xf8fdff, sun:0xffffff, sunI:1.3,  sunPos:[200,400,150],   amb:1.1 },
-    afternoon: { sky:0xf3c9a0, sea:0xe6c8c1, cloud:0xffe3d1, sun:0xffd08a, sunI:1.45, sunPos:[320,170,140],   amb:1.0 },
-    night:     { sky:0x0a1a2a, sea:0x405b7c, cloud:0xaebbd0, sun:0x9ab7d9, sunI:0.5,  sunPos:[-200,300,-150], amb:0.6 }
+    day:       { sky:0xd9edf6, sea:P.sea,    sun:0xffffff, sunI:1.3,  sunPos:[200,400,150],   amb:1.1 },
+    afternoon: { sky:0xf3c9a0, sea:0x3d7f9a, sun:0xffd08a, sunI:1.45, sunPos:[320,170,140],   amb:1.0 },
+    night:     { sky:0x0a1a2a, sea:0x163a55, sun:0x9ab7d9, sunI:0.5,  sunPos:[-200,300,-150], amb:0.6 }
   };
   const skyButtons = [...document.querySelectorAll(".tbtn[data-sky]")];
   let curSky = "day";
@@ -885,9 +873,6 @@ function init3D(){
     scene.background.setHex(S.sky);
     scene.fog.color.setHex(S.sky);
     sea.material.color.setHex(S.sea);
-    cloudMat.color.setHex(S.cloud);
-    cloudMat.emissive.setHex(name === "night" ? 0x435877 : (name === "afternoon" ? 0x9f6d6b : 0x83b9d5));
-    cloudMat.emissiveIntensity = name === "night" ? 0.22 : 0.08;
     sun.color.setHex(S.sun);
     sun.intensity = S.sunI * MAP_SET.light;
     sun.position.set(...S.sunPos);
@@ -1153,7 +1138,25 @@ function init3D(){
     tree(g, -27, -18, y, 0.65);
     tree(g, 27, 18, y, 0.65);
   }
-  const builders = { ramp:buildRamp, restroom:buildRestroom, track:buildTrack, play:buildPlay, corridor:buildCorridor };
+  function buildBus(g, y){
+    const box = (...a) => boxIn(g, ...a);
+    const cyl = (...a) => cylIn(g, ...a);
+    // a yellow touring bus marks the vehicle procurement project
+    box(38, 1.2, 22, ASPHALT, 0, y + 0.7, 0);
+    box(34, 10, 16, 0xf2c14e, 0, y + 8, 0);
+    box(20, 5.5, 0.6, 0xb9e4f3, -1, y + 13.2, 8.2);
+    box(18, 5.5, 0.6, 0xb9e4f3, -1, y + 13.2, -8.2);
+    box(0.6, 5.4, 11, 0xa8d9ed, 16.8, y + 10.8, 0);
+    box(0.8, 6, 16.2, 0xf2c14e, -15.8, y + 10.5, 0);
+    box(0.8, 7.5, 3, P.roof, 16.6, y + 4.8, 0);
+    box(5, 4, 0.7, P.bld, 17.3, y + 8, 0);
+    [-11, 11].forEach(x => cyl(3.2, 3.2, 2, 0x343a40, x, y + 3.4, 8.2, 12));
+    [-11, 11].forEach(x => cyl(3.2, 3.2, 2, 0x343a40, x, y + 3.4, -8.2, 12));
+    box(13, 0.8, 0.8, 0x3f4750, 0, y + 2.4, 0);
+    tree(g, -26, -18, y, 0.6);
+    tree(g, 27, 18, y, 0.6);
+  }
+  const builders = { ramp:buildRamp, restroom:buildRestroom, track:buildTrack, play:buildPlay, corridor:buildCorridor, bus:buildBus };
 
   // hub island with a headquarters building, flagpole and trees
   const hubIsle = makeIsland(hub.r, hub.pct, P.hub, 0);
@@ -1235,7 +1238,7 @@ function init3D(){
     spoonbills.push({ bird, off:i * 2.1, rad:82 + i * 6 });
   }
 
-  // five satellite islands with their facilities, plus bridges to the hub
+  // six satellite islands with their facilities, plus bridges to the hub
   const isles = projects.map((p, i) => {
     const o = makeIsland(p.r, p.pct, P.land, i + 1);
     o.group.position.set(p.pos[0], 0, p.pos[1]);
@@ -1599,11 +1602,6 @@ function init3D(){
       seaPos.setZ(i, Math.sin(x * 0.016 + t * 0.9) * amp + Math.cos(y * 0.02 + t * 0.7) * amp);
     }
     seaPos.needsUpdate = true;
-    cloudBanks.forEach(({bank,x,z,phase}) => {
-      bank.position.x = x + Math.sin(t * 0.035 + phase) * 5;
-      bank.position.z = z + Math.cos(t * 0.03 + phase) * 4;
-      bank.position.y = 2.8 + Math.sin(t * 0.45 + phase) * 0.7;
-    });
 
     if (viewMode !== "free"){
       const goal = viewMode === "top" ? 0.08 : 0.7;
