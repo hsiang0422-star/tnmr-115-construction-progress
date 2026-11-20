@@ -1811,6 +1811,11 @@ function init3D(){
   }
   viewButtons.forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
 
+  const v = new THREE.Vector3();
+
+  function frame(now){
+    const t = now * 0.001;
+
     cloudBanks.forEach(({bank,x,z,phase}) => {
       bank.position.x = x + Math.sin(t * 0.035 + phase) * 5;
       bank.position.z = z + Math.cos(t * 0.03 + phase) * 4;
