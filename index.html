@@ -1980,8 +1980,8 @@ function init3D(){
 
     // gentle bob on the selected island
     const bob = reduceMotion ? 0 : Math.sin(t * 2) * 1.2;
-    hubIsle.group.position.y = active < 0 ? bob : 0;
-    isles.forEach((s, i) => { s.o.group.position.y = i === active ? bob : 0; });
+    hubIsle.group.position.y = ISLAND_LIFT + (active < 0 ? bob : 0);
+    isles.forEach((s, i) => { s.o.group.position.y = ISLAND_LIFT + (i === active ? bob : 0); });
 
     // labels follow the islands on screen
     const placeTag = (tag, x, y, z, on) => {
@@ -2023,7 +2023,7 @@ function init3D(){
       const a = t * 0.22 + sb.off;
       sb.bird.position.set(
         hub.pos[0] + Math.cos(a) * sb.rad,
-        Y(hubIsle.top) + 52 + Math.sin(t * 1.5 + sb.off) * 3,
+        ISLAND_LIFT + Y(hubIsle.top) + 52 + Math.sin(t * 1.5 + sb.off) * 3,
         hub.pos[1] + Math.sin(a) * sb.rad
       );
       sb.bird.rotation.y = -a - Math.PI / 2;
