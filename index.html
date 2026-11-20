@@ -200,6 +200,10 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
 .timeline .tag2{grid-column:2;font-size:12px;color:var(--muted)}
 .timeline li.past .tag2{color:var(--warm);font-weight:500}
 
+
+.bus-gallery{grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px}.bus-gallery h3{margin:0 0 4px;font-size:17px}.bus-gallery p{margin:0 0 12px;color:var(--muted);font-size:13px}.bus-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.bus-photo{margin:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--card)}.bus-photo img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}.bus-photo figcaption{padding:9px 12px;font-size:13px;color:var(--muted)}
+@media(max-width:560px){.bus-photos{grid-template-columns:1fr}}
+
 .foot{margin-top:16px;font-size:13px;color:var(--muted)}
 .foot a{color:var(--land)}
 
@@ -778,7 +782,15 @@ function renderDetail(){
     <div class="gantt-scroll">
       <h3 style="margin:14px 0 4px;font-size:16px">甘特進度圖（各階段任務）</h3>
       ${ganttHTML(active)}
-    </div>`;
+    </div>
+    ${p.kind === "bus" ? `<section class="bus-gallery" aria-label="大型巴士目前進度照片">
+      <h3>大型巴士目前進度照片</h3>
+      <p>照片來自「11307新購校車」工程資料夾（2026/11/20 更新）</p>
+      <div class="bus-photos">
+        <figure class="bus-photo"><img src="assets/bus-progress-1.jpg" alt="大型巴士車體骨架與底盤組裝現況" loading="lazy"><figcaption>車體骨架與底盤組裝現況</figcaption></figure>
+        <figure class="bus-photo"><img src="assets/bus-progress-2.jpg" alt="大型巴士車體骨架及底盤施工現況" loading="lazy"><figcaption>車體骨架及底盤施工現況</figcaption></figure>
+      </div>
+    </section>` : ""}`;
 }
 function select(i){ openSheet(i); }
 const sheet = document.getElementById("sheet");
@@ -1538,6 +1550,40 @@ function init3D(){
     return { o, tag, x:p.pos[0], z:p.pos[1], top:o.top };
   });
 
+
+  // Small friendly island walkers: five character types repeat across the six projects.
+  const walkers = [];
+  const walkerKinds = ["rabbit","bear","dog","capybara","child"];
+  const makeWalker = kind => {
+    const root = new THREE.Group();
+    const palette = { rabbit:[0xf1e6d7,0xd99b9b], bear:[0x9b6847,0xf0c891], dog:[0xe8bd73,0x8e593b], capybara:[0xb8895c,0x60402e], child:[0x397fb2,0xf0bd83] }[kind];
+    const fur=mat(palette[0]), accent=mat(palette[1]), darkEye=mat(0x332b29), shirt=mat(kind==="child"?[0x45a0ca,0xf08c5c,0x73a66b][Math.floor(Math.random()*3)]:palette[0]);
+    const ball=(g,m,x,y,z,sx,sy,sz)=>{const q=new THREE.Mesh(new THREE.SphereGeometry(1,12,10),m);q.position.set(x,y,z);q.scale.set(sx,sy,sz);g.add(q);return q;};
+    ball(root,kind==="child"?shirt:fur,0,0.88,0,0.48,0.65,0.38);
+    ball(root,fur,0,1.63,0.06,0.43,0.43,0.4);
+    ball(root,darkEye,-0.15,1.7,0.405,0.045,0.055,0.035);ball(root,darkEye,0.15,1.7,0.405,0.045,0.055,0.035);
+    if(kind==="rabbit"){ball(root,fur,-0.18,2.18,0.04,0.12,0.36,0.11).rotation.z=-0.16;ball(root,accent,0.12,2.18,0.04,0.12,0.36,0.11).rotation.z=0.13;}
+    else if(kind==="bear"){ball(root,fur,-0.3,1.96,0.02,0.16,0.16,0.12);ball(root,fur,0.3,1.96,0.02,0.16,0.16,0.12);ball(root,accent,0,1.55,0.43,0.2,0.14,0.12);}
+    else if(kind==="dog"){ball(root,accent,-0.32,1.78,0,0.13,0.27,0.12).rotation.z=-0.4;ball(root,accent,0.32,1.78,0,0.13,0.27,0.12).rotation.z=0.4;ball(root,accent,0,1.54,0.42,0.23,0.15,0.15);}
+    else if(kind==="capybara"){ball(root,accent,0,1.5,0.42,0.25,0.16,0.19);ball(root,fur,-0.3,1.95,0.05,0.11,0.12,0.1);ball(root,fur,0.3,1.95,0.05,0.11,0.12,0.1);}
+    else {ball(root,mat(0x50362f),0,1.39,0.43,0.14,0.07,0.07);ball(root,mat(0xf4d45f),0,1.99,0,0.22,0.09,0.22);}
+    const legs=[];
+    for(let s of [-1,1]) for(let f of [-1,1]){const pivot=new THREE.Group();pivot.position.set(s*0.24,0.53,f*0.19);root.add(pivot);ball(pivot,kind==="child"?mat(0x34445a):fur,0,-0.22,0,0.13,0.31,0.13);legs.push({pivot,phase:(s*f>0?0:Math.PI)});}
+    return {root,legs};
+  };
+  isles.forEach((isle, islandIndex) => {
+    const project=projects[islandIndex];
+    for(let n=0;n<5;n++){
+      const kind=walkerKinds[n], walker=makeWalker(kind), angle=(n/5)*Math.PI*2+islandIndex*0.43;
+      const radius=project.r*0.48;
+      walker.root.position.set(Math.cos(angle)*radius,isle.top+0.3,Math.sin(angle)*radius);
+      walker.root.rotation.y=-angle+Math.PI/2;
+      walker.root.scale.setScalar(1.35);
+      isle.o.group.add(walker.root);
+      walkers.push({walker,group:isle.o.group,top:isle.top,radius,angle,speed:(n%2?1:-1)*(0.12+islandIndex*0.006),phase:n*1.3+islandIndex});
+    }
+  });
+
   // Curved paved roads inspired by Meshy's "Curved Road Fixed" model.
   // Each road has a gently raised bridge deck, natural arc, pale shoulders,
   // asphalt, painted edges, a broken center line, and quiet concrete curbs.
@@ -1971,6 +2017,12 @@ function init3D(){
       placeTag(s.tag, s.x, s.top + s.o.group.position.y + 16, s.z, i === active);
     });
 
+    walkers.forEach(({walker,group,top,radius,angle,speed,phase}) => {
+      const a=angle+t*speed, bob=Math.abs(Math.sin(t*4+phase))*0.12;
+      walker.root.position.set(Math.cos(a)*radius,top+0.3+bob,Math.sin(a)*radius);
+      walker.root.rotation.y=-a+Math.PI/2;
+      walker.legs.forEach(({pivot,phase:legPhase})=>{pivot.rotation.x=Math.sin(t*6+phase+legPhase)*0.48;});
+    });
     movers.forEach(m => {
       const s = (((m.s0 + t * m.speed) % 1) + 1) % 1;
       const u = m.dir > 0 ? s : 1 - s;
