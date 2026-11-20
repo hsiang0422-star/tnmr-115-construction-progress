@@ -920,33 +920,31 @@ function init3D(){
   sea.receiveShadow=true;
   scene.add(sea);
 
-  const cloudGeo = new THREE.SphereGeometry(1, 32, 20);
+  const cloudGeo = new THREE.SphereGeometry(1, 40, 28);
   const cloudMat = surface({
-    color:0xfafcff, roughness:0.98, transparent:true, opacity:0.68, depthWrite:false,
-    emissive:0xb4d2e6, emissiveIntensity:0.018
+    color:0xf7fbff, roughness:0.98, transparent:true, opacity:0.56, depthWrite:false,
+    emissive:0xb4d2e6, emissiveIntensity:0.035
   });
   const cloudBanks = [];
   const cloudAnchors = [
-    [-270,-250,1.1], [-20,-335,1.0], [270,-250,1.15],
-    [-330,-15,0.95], [330,5,1.0],
-    [-280,245,1.0], [0,330,1.15], [285,250,1.0],
-    [-190,270,0.8], [195,275,0.85]
+    [-410,-340,0.82],[-160,-470,1.02],[180,-430,0.9],[430,-290,0.82],
+    [-440,80,0.92],[420,150,0.88],[-310,390,0.9],[100,460,1.0]
   ];
-  const puffLayout = [
-    [0,0,0,1.0], [-28,-1,-7,0.78], [25,1,8,0.82], [-7,2,22,0.68],
-    [10,2,-20,0.76], [-45,-2,9,0.62], [43,0,-9,0.68]
-  ];
-  cloudAnchors.forEach(([x,z,scale], index) => {
-    const bank = new THREE.Group();
-    puffLayout.forEach(([dx,dy,dz,size]) => {
-      const puff = new THREE.Mesh(cloudGeo, cloudMat);
-      puff.scale.set(27 * size * scale, 7.5 * size * scale, 19 * size * scale);
-      puff.position.set(dx * scale, dy + (index % 3) * 0.45, dz * scale);
+  const cloudRand=createSeededRandom(64021), cloudBaseY=WATER_LEVEL+112;
+  cloudAnchors.forEach(([x,z,scale],index)=>{
+    const bank=new THREE.Group(), count=7+(index%3);
+    for(let n=0;n<count;n++){
+      const puff=new THREE.Mesh(cloudGeo,cloudMat);
+      const angle=cloudRand()*Math.PI*2, spread=12+cloudRand()*34;
+      const sx=(15+cloudRand()*22)*scale, sy=(7+cloudRand()*11)*scale, sz=(13+cloudRand()*20)*scale;
+      puff.scale.set(sx,sy,sz);
+      puff.position.set(Math.cos(angle)*spread,(cloudRand()-0.5)*17,Math.sin(angle)*spread*0.58);
+      puff.rotation.y=cloudRand()*Math.PI;
       bank.add(puff);
-    });
-    bank.position.set(x, 2.8 + (index % 2) * 0.8, z);
-    scene.add(bank);
-    cloudBanks.push({ bank, x, z, phase:index * 0.83 });
+    }
+    const y=cloudBaseY+(index%3)*15;
+    bank.position.set(x,y,z);scene.add(bank);
+    cloudBanks.push({bank,x,z,y,phase:index*1.71});
   });
 
   // stars for the night sky
@@ -1240,14 +1238,15 @@ function init3D(){
     const geo = gen.children[0].geometry;
     geo.rotateX(-Math.PI / 2);     // after this, getY(i) holds the generated height in 0..1
     const pos = geo.attributes.position;
-    const cols = new Float32Array(pos.count * 3);
+    const cols = new Float32Array(pos.count * 3), insideMask = new Uint8Array(pos.count);
     const cSand = new THREE.Color(P.sand), cGrass = new THREE.Color(P.grass);
     const cLand = new THREE.Color(landColor), c = new THREE.Color();
     for (let i = 0; i < pos.count; i++){
       const px = pos.getX(i) / r, pz = pos.getZ(i) / r;
       const d = Math.hypot(px, pz);
-      const th = Math.atan2(pz, px);
-      const inside = sstep(0, 0.14, coastR(th) - d);          // 0 at the shore, 1 well inland
+      const th = Math.atan2(pz, px), coast = coastR(th);
+      insideMask[i] = d <= coast ? 1 : 0;
+      const inside = sstep(0, 0.14, coast - d);          // 0 at the shore, 1 well inland
       const hills = pos.getY(i);   // THREE.Terrain height, 0..1
       const rolling = (fbm(px * 1.12 + ox, pz * 1.12 + oz) - 0.42) * 4.2;
       const natural = -14 + inside * (14 + top * 0.43 * hills + rolling);  // irregular, gently rolling slopes
@@ -1259,15 +1258,12 @@ function init3D(){
       c.multiplyScalar(0.91+soilNoise*0.2);
       cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
     }
-    // Clip the terrain mesh to its irregular coastline. Lowering outside vertices alone leaves broad triangular sheets between islands.
+    // Keep only complete interior triangles so the coastline cannot leave thin grass spikes.
     if (geo.index){
       const source=geo.index.array, visible=[];
       for(let k=0;k<source.length;k+=3){
         const a=source[k],b=source[k+1],c=source[k+2];
-        const cx=(pos.getX(a)+pos.getX(b)+pos.getX(c))/(3*r);
-        const cz=(pos.getZ(a)+pos.getZ(b)+pos.getZ(c))/(3*r);
-        const d=Math.hypot(cx,cz), th=Math.atan2(cz,cx);
-        if(d<=coastR(th)+0.012) visible.push(a,b,c);
+        if(insideMask[a]&&insideMask[b]&&insideMask[c]) visible.push(a,b,c);
       }
       geo.setIndex(visible);
     }
@@ -1280,14 +1276,15 @@ function init3D(){
     group.add(terrain);
 
     // Eroded rock tapers to an irregular point instead of forming stacked toy-like shelves.
-    const rockSegments=72, rockRings=14, rockPositions=[], rockColors=[], rockUvs=[], rockIndices=[];
+    const rockSegments=96, rockRings=20, rockPositions=[], rockColors=[], rockUvs=[], rockIndices=[];
+    const rockTopY=-11, rockBottomY=-55;
     const rockUpper=new THREE.Color(dark?0x827766:0x9c896d), rockLower=new THREE.Color(dark?0x4e5553:0x625b4f), rockTint=new THREE.Color();
     for(let j=0;j<=rockRings;j++){
-      const v=j/rockRings, baseRadius=r*(0.97-0.84*Math.pow(v,0.82));
-      const ringY=top*0.56-1-v*(top*0.56+31);
+      const v=j/rockRings, ringY=rockTopY-v*(rockTopY-rockBottomY);
       for(let k=0;k<=rockSegments;k++){
-        const u=k/rockSegments, angle=u*Math.PI*2;
-        const irregular=1+0.055*Math.sin(angle*3+seed)+0.032*Math.sin(angle*7-seed*0.7)+0.02*Math.sin(angle*13+v*5);
+        const u=k/rockSegments, angle=u*Math.PI*2, coast=coastR(angle);
+        const baseRadius=r*coast*(0.99-0.62*Math.pow(v,0.82));
+        const irregular=1+(0.035*Math.sin(angle*3+seed)+0.022*Math.sin(angle*7-seed*0.7)+0.012*Math.sin(angle*13+v*5))*v;
         const radius=baseRadius*irregular;
         const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
         const y=ringY+Math.sin(angle*4+seed*1.7)*2.2*v+Math.sin(angle*9+seed)*0.8*v;
@@ -1586,7 +1583,7 @@ function init3D(){
   const gulls=[];
   for(let i=0;i<18;i++){
     const bird=makeGull();bird.scale.setScalar(SZ*(1.65+(i%4)*0.17));scene.add(bird);
-    gulls.push({bird,phase:i*2.17,rx:118+(i*31)%168,rz:108+(i*23)%154,alt:ISLAND_LIFT+75+(i%5)*17,speed:(i%2?1:-1)*(0.014+(i%4)*0.003)});
+    gulls.push({bird,phase:i*2.17,rx:118+(i*31)%168,rz:108+(i*23)%154,alt:ISLAND_LIFT+120+(i%5)*18,speed:(i%2?1:-1)*(0.014+(i%4)*0.003)});
   }
 
   // six satellite islands with their facilities, plus bridges to the hub
@@ -2012,10 +2009,10 @@ function init3D(){
       waterPos.needsUpdate=true;seaGeo.computeVertexNormals();
     }
 
-    cloudBanks.forEach(({bank,x,z,phase}) => {
-      bank.position.x = x + Math.sin(t * 0.035 + phase) * 5;
-      bank.position.z = z + Math.cos(t * 0.03 + phase) * 4;
-      bank.position.y = WATER_LEVEL + 70 + Math.sin(t * 0.45 + phase) * 0.7;
+    cloudBanks.forEach(({bank,x,z,y,phase}) => {
+      bank.position.x = x + Math.sin(t * 0.018 + phase) * 3.5;
+      bank.position.z = z + Math.cos(t * 0.016 + phase) * 3.0;
+      bank.position.y = y + Math.sin(t * 0.12 + phase) * 1.4;
     });
 
     if (viewMode !== "free"){
