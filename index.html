@@ -881,6 +881,10 @@ function init3D(){
     return texture;
   }
   const fineGrain=makeGrainTexture(31,384,24), stoneGrain=makeGrainTexture(77,384,42);
+  const groundTexture=new THREE.TextureLoader().load("assets/ground-realistic.jpg");
+  groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;groundTexture.repeat.set(9,9);groundTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+  const rockTexture=new THREE.TextureLoader().load("assets/cliff-realistic.jpg");
+  rockTexture.colorSpace=THREE.SRGBColorSpace;rockTexture.wrapS=rockTexture.wrapT=THREE.RepeatWrapping;rockTexture.repeat.set(7,2.4);rockTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
   const surface = (options = {}) => new THREE.MeshStandardMaterial({
     roughness:0.88, metalness:0.015, map:fineGrain, bumpMap:fineGrain, bumpScale:0.055, ...options
   });
@@ -982,23 +986,29 @@ function init3D(){
   function cylIn(g, rt, rb, h, c, x, y, z, seg = 10){
     return cylRaw(g, rt * SZ, rb * SZ, h * SZ, c, x * SZ, Y(y), z * SZ, seg);
   }
-  function tree(g, x, z, y, s = 1){
-    const trunk=cylIn(g,0.9*s,1.5*s,8*s,P.trunk,x,y+4*s,z,14);trunk.castShadow=true;trunk.receiveShadow=true;
-    const form=Math.abs(Math.sin(x*12.9898+z*78.233));
-    if(form<0.34){
+  function tree(g,x,z,y,s=1){
+    const trunk=cylIn(g,0.9*s,1.55*s,8*s,P.trunk,x,y+4*s,z,16);trunk.castShadow=true;trunk.receiveShadow=true;
+    const shape=Math.abs(Math.sin(x*12.9898+z*78.233));
+    if(shape<0.34){
       for(let tier=0;tier<4;tier++){
-        const radius=(6.6-tier*1.15)*s*SZ,height=9.2*s*SZ;
-        const crown=new THREE.Mesh(new THREE.ConeGeometry(radius,height,18,5),mat(tier===1?P.grass:P.leaf));
-        crown.position.set(x*SZ,Y(y+(7.5+tier*4.1)*s),z*SZ);crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
+        const radius=(6.8-tier*1.25)*s*SZ,height=9.5*s*SZ;
+        const crown=new THREE.Mesh(new THREE.ConeGeometry(radius,height,24,6),mat(tier%2?P.grass:P.leaf));
+        crown.position.set(x*SZ,Y(y+(7.3+tier*4.1)*s),z*SZ);crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
       }
     }else{
-      const clumps=[[-2.8,8.3,0,5.4,0.86],[2.2,9.4,1.4,5.8,0.92],[0,12.4,-1.6,5.2,1.02],[-0.8,14.2,0.2,4.6,0.84]];
-      clumps.forEach(([dx,dy,dz,radius,stretch],i)=>{
-        const crown=new THREE.Mesh(new THREE.SphereGeometry(radius*s*SZ,20,14),mat(i%2?P.grass:P.leaf));
-        crown.position.set((x+dx*s)*SZ,Y(y+dy*s),(z+dz*s)*SZ);crown.scale.set(stretch,0.86,0.96);crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
-      });
-      for(const [dx,dz,rz] of [[-3,-1,-0.45],[3,1,0.45]]){
-        const branch=cylIn(g,0.32*s,0.55*s,5*s,P.trunk,x+dx*s,y+8*s,z+dz*s,10);branch.rotation.z=rz;
+      let state=Math.floor(Math.abs(Math.sin(x*91.17+z*37.91))*1e8)>>>0;
+      const rand=()=>{state=(state*1664525+1013904223)>>>0;return state/4294967296;};
+      const greens=[P.leaf,P.grass,0x526d43,0x61794b];
+      for(let i=0;i<12;i++){
+        const a=rand()*Math.PI*2,rad=Math.sqrt(rand())*5.4*s;
+        const radius=(2.5+rand()*1.0)*s*SZ;
+        const crown=new THREE.Mesh(new THREE.SphereGeometry(radius,16,12),mat(greens[i%greens.length]));
+        crown.position.set((x+Math.cos(a)*rad)*SZ,Y(y+(8.8+rand()*6.2)*s),(z+Math.sin(a)*rad)*SZ);
+        crown.scale.set(0.88+rand()*0.28,0.72+rand()*0.28,0.9+rand()*0.22);
+        crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
+      }
+      for(const [dx,dz,rz] of [[-3,-1,-0.46],[3,1,0.46]]){
+        const branch=cylIn(g,0.28*s,0.48*s,5.5*s,P.trunk,x+dx*s,y+8*s,z+dz*s,12);branch.rotation.z=rz;
       }
     }
   }
@@ -1035,9 +1045,13 @@ function init3D(){
     const f = new THREE.Mesh(new THREE.SphereGeometry(1.8 * SZ, 8, 6), mat(c));
     f.position.set(x * SZ, Y(y + 3.9), z * SZ); g.add(f);
   }
-  function grassTuft(g, x, z, y){
-    const m = new THREE.Mesh(new THREE.ConeGeometry(1.8 * SZ, 4 * SZ, 5), mat(P.grass));
-    m.position.set(x * SZ, Y(y + 2), z * SZ); g.add(m);
+  function grassTuft(g,x,z,y){
+    const base=Math.abs(Math.sin(x*42.7+z*19.1));
+    for(let i=0;i<5;i++){
+      const a=i*Math.PI*2/5+base, blade=new THREE.Mesh(new THREE.ConeGeometry(0.62*SZ,3.8*SZ,6),mat(i%2?P.grass:P.leaf));
+      blade.position.set(x*SZ+Math.cos(a)*0.8,Y(y+1.8),z*SZ+Math.sin(a)*0.8);
+      blade.rotation.z=Math.cos(a)*0.16;blade.rotation.x=Math.sin(a)*0.16;g.add(blade);
+    }
   }
   function bench(g, x, z, y, ry){
     boxIn(g, 6, 0.8, 2, P.roof, x, y + 2.4, z, 0, ry);
@@ -1235,7 +1249,7 @@ function init3D(){
     geo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
     geo.computeVertexNormals();
     const terrain = new THREE.Mesh(geo, surface({
-      vertexColors:true, roughness:0.97, map:fineGrain, bumpMap:fineGrain, bumpScale:0.12, flatShading:false
+      vertexColors:true, roughness:0.98, map:groundTexture, roughnessMap:fineGrain, bumpMap:groundTexture, bumpScale:0.07, flatShading:false
     }));
     terrain.receiveShadow = true; terrain.castShadow = true;
     group.add(terrain);
@@ -1266,7 +1280,7 @@ function init3D(){
     rockGeo.setAttribute("color",new THREE.Float32BufferAttribute(rockColors,3));
     rockGeo.setAttribute("uv",new THREE.Float32BufferAttribute(rockUvs,2));
     rockGeo.setIndex(rockIndices);rockGeo.computeVertexNormals();
-    const rock=new THREE.Mesh(rockGeo,surface({vertexColors:true,map:stoneGrain,bumpMap:stoneGrain,bumpScale:0.18,roughness:0.98,flatShading:false}));
+    const rock=new THREE.Mesh(rockGeo,surface({vertexColors:true,map:rockTexture,roughnessMap:stoneGrain,bumpMap:rockTexture,bumpScale:0.22,roughness:0.99,flatShading:false}));
     rock.castShadow=true;rock.receiveShadow=true;group.add(rock);
 
     return { group, base:terrain, land:terrain, top };
@@ -1538,7 +1552,7 @@ function init3D(){
     const root = new THREE.Group();
     const palette = { rabbit:[0xf1e6d7,0xd99b9b], bear:[0x9b6847,0xf0c891], dog:[0xe8bd73,0x8e593b], capybara:[0xb8895c,0x60402e], child:[0x397fb2,0xf0bd83] }[kind];
     const fur=mat(palette[0]), accent=mat(palette[1]), darkEye=mat(0x332b29), shirt=mat(kind==="child"?[0x45a0ca,0xf08c5c,0x73a66b][Math.floor(Math.random()*3)]:palette[0]);
-    const ball=(g,m,x,y,z,sx,sy,sz)=>{const q=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),m);q.position.set(x,y,z);q.scale.set(sx,sy,sz);q.castShadow=true;q.receiveShadow=true;g.add(q);return q;};
+    const ball=(g,m,x,y,z,sx,sy,sz)=>{const q=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),m);q.position.set(x,y,z);q.scale.set(sx,sy,sz);q.castShadow=true;q.receiveShadow=true;g.add(q);return q;};
     ball(root,kind==="child"?shirt:fur,0,0.88,0,0.48,0.65,0.38);
     ball(root,fur,0,1.63,0.06,0.43,0.43,0.4);
     ball(root,darkEye,-0.15,1.7,0.405,0.045,0.055,0.035);ball(root,darkEye,0.15,1.7,0.405,0.045,0.055,0.035);
