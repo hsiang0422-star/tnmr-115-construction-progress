@@ -886,10 +886,14 @@ function init3D(){
   });
 
   // Cloud sea: cool atmospheric surface with restrained cloud banks.
-  const seaGeo = new THREE.PlaneGeometry(1600, 1600, 80, 80);
-  const sea = new THREE.Mesh(seaGeo, surface({ color:0x4fa8d7, roughness:0.68, metalness:0.08, flatShading:false }));
+  const WATER_LEVEL=ISLAND_LIFT-14;
+  const seaGeo = new THREE.PlaneGeometry(1200, 1200, 112, 112);
+  const seaWaveBase=seaGeo.attributes.position.array.slice();
+  const sea = new THREE.Mesh(seaGeo, surface({ color:0x3c9ac0, roughness:0.34, metalness:0.16, bumpScale:0.11, flatShading:false }));
   sea.rotation.x = -Math.PI / 2;
-  sea.position.y = -220; // keep the water color available for sky settings, but do not render an ocean below the islands
+  sea.position.y = WATER_LEVEL;
+  sea.receiveShadow=true;
+  scene.add(sea);
 
   const cloudGeo = new THREE.SphereGeometry(1, 32, 20);
   const cloudMat = surface({
@@ -1533,6 +1537,33 @@ function init3D(){
     spoonbills.push({ bird, off:i * 2.1, rad:82 + i * 6 });
   }
 
+  // A flock of gulls circles above the town and project islands.
+  const gullMat=new THREE.MeshStandardMaterial({color:0xf9fbfa,roughness:0.62});
+  const gullShade=new THREE.MeshStandardMaterial({color:0x8798a2,roughness:0.74,side:THREE.DoubleSide});
+  function makeGull(){
+    const root=new THREE.Group();
+    const body=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),gullMat);
+    body.scale.set(2.2,0.7,1.05);root.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.58,12,10),gullMat);
+    head.position.set(1.65,0.15,0);root.add(head);
+    const beak=new THREE.Mesh(new THREE.ConeGeometry(0.28,1.15,7),mat(0xe4a443));
+    beak.rotation.z=-Math.PI/2;beak.position.set(2.35,0.05,0);root.add(beak);
+    const wings=[];
+    for(const side of [-1,1]){
+      const pivot=new THREE.Group();pivot.position.set(0,0.2,side*0.55);
+      const shape=new THREE.Shape();
+      shape.moveTo(0,0);shape.quadraticCurveTo(-1.5,side*1.7,-6.8,side*5.4);shape.quadraticCurveTo(-4.8,side*2.4,-2.4,side*0.2);shape.closePath();
+      const wing=new THREE.Mesh(new THREE.ShapeGeometry(shape),side===1?gullMat:gullShade);
+      wing.rotation.x=side*Math.PI/2;pivot.add(wing);root.add(pivot);wings.push({pivot,side});
+    }
+    root.userData.wings=wings;return root;
+  }
+  const gulls=[];
+  for(let i=0;i<15;i++){
+    const bird=makeGull();bird.scale.setScalar(SZ*(0.78+(i%4)*0.12));scene.add(bird);
+    gulls.push({bird,phase:i*2.17,rx:118+(i*31)%168,rz:108+(i*23)%154,alt:ISLAND_LIFT+75+(i%5)*17,speed:(i%2?1:-1)*(0.014+(i%4)*0.003)});
+  }
+
   // six satellite islands with their facilities, plus bridges to the hub
   const isles = projects.map((p, i) => {
     const o = makeIsland(p.r, p.pct, P.land, i + 1);
@@ -1595,6 +1626,20 @@ function init3D(){
     walkers.push({walker,group:hubIsle.group,top:hy,radius,angle,speed:n%2?0.075:-0.075,phase:n*1.1+12});
   }
 
+  function makeBoat(color=0x477b89, cabinColor=0xe5e2d8){
+    const boat=new THREE.Group();
+    const shape=new THREE.Shape();
+    shape.moveTo(-5.2,-1.35);shape.lineTo(3.1,-1.35);shape.lineTo(5.0,-0.55);shape.lineTo(5.3,0);shape.lineTo(5.0,0.55);shape.lineTo(3.1,1.35);shape.lineTo(-5.2,1.35);shape.closePath();
+    const hullGeo=new THREE.ExtrudeGeometry(shape,{depth:1.1,bevelEnabled:true,bevelSegments:1,steps:1,bevelSize:0.16,bevelThickness:0.16});
+    hullGeo.translate(0,0,-0.55);hullGeo.rotateX(Math.PI/2);
+    const hull=new THREE.Mesh(hullGeo,mat(color));boat.add(hull);hull.position.y=0.9;hull.castShadow=true;
+    const deck=new THREE.Mesh(new THREE.BoxGeometry(6.4,0.28,2.1),mat(0xc8b99b));deck.position.set(-0.1,1.15,0);boat.add(deck);
+    const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.35,1.25,1.75),mat(cabinColor));cabin.position.set(-0.2,1.85,0);boat.add(cabin);
+    const windowPane=new THREE.Mesh(new THREE.BoxGeometry(1.25,0.55,1.82),mat(0x47738a));windowPane.position.set(0.15,1.95,0);boat.add(windowPane);
+    const bow=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,1.5,8),mat(0xf3d16c));bow.position.set(3.1,1.4,0);bow.rotation.z=Math.PI/2;boat.add(bow);
+    boat.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+    return boat;
+  }
   // Curved paved roads inspired by Meshy's "Curved Road Fixed" model.
   // Each road has a gently raised bridge deck, natural arc, pale shoulders,
   // asphalt, painted edges, a broken center line, and quiet concrete curbs.
@@ -1695,6 +1740,15 @@ function init3D(){
       islandMovers.push({car,curve:link,s0,dir,speed:0.042});
     });
   });
+
+  // Small fishing boats and harbor craft circle the island chain.
+  const boats=[];
+  const boatColors=[0x477b89,0xb27443,0x5c8170,0x7a8790,0xa45b4f];
+  for(let i=0;i<16;i++){
+    const boat=makeBoat(boatColors[i%boatColors.length],i%3===0?0xf0e5cf:0xd7d5c9);
+    boat.scale.setScalar(SZ*(0.72+(i%3)*0.1));scene.add(boat);
+    boats.push({boat,phase:i*Math.PI*2/16,rx:126+(i*37)%145,rz:118+(i*29)%153,speed:(i%2?1:-1)*(0.018+(i%4)*0.003),wave:i*1.7});
+  }
 
   const hubTag = document.createElement("div");
   hubTag.className = "tag hub";
@@ -1921,10 +1975,19 @@ function init3D(){
   function frame(now){
     const t = now * 0.001;
 
+    if(!reduceMotion){
+      const waterPos=seaGeo.attributes.position;
+      for(let i=0;i<waterPos.count;i++){
+        const x=seaWaveBase[i*3],z=seaWaveBase[i*3+1];
+        waterPos.array[i*3+2]=Math.sin(x*0.018+t*0.8)*1.35+Math.sin(z*0.024-t*0.66)*0.95+Math.sin((x+z)*0.012+t*0.52)*1.15;
+      }
+      waterPos.needsUpdate=true;seaGeo.computeVertexNormals();
+    }
+
     cloudBanks.forEach(({bank,x,z,phase}) => {
       bank.position.x = x + Math.sin(t * 0.035 + phase) * 5;
       bank.position.z = z + Math.cos(t * 0.03 + phase) * 4;
-      bank.position.y = 29 + Math.sin(t * 0.45 + phase) * 0.7;
+      bank.position.y = WATER_LEVEL + 70 + Math.sin(t * 0.45 + phase) * 0.7;
     });
 
     if (viewMode !== "free"){
@@ -1980,6 +2043,20 @@ function init3D(){
       const point=m.curve.getPointAt(u), tangent=m.curve.getTangentAt(u);
       m.car.position.copy(point);m.car.position.y+=1.65;
       m.car.rotation.y=Math.atan2(-tangent.z*m.dir,tangent.x*m.dir);
+    });
+    boats.forEach(b=>{
+      const a=b.phase+t*b.speed,x=Math.cos(a)*b.rx,z=Math.sin(a)*b.rz;
+      const wave=Math.sin(x*0.018+t*0.8)*1.35+Math.sin(z*0.024-t*0.66)*0.95+Math.sin((x+z)*0.012+t*0.52)*1.15;
+      b.boat.position.set(x,WATER_LEVEL+1.5+wave,z);
+      b.boat.rotation.y=Math.atan2(Math.cos(a)*b.rz,-Math.sin(a)*b.rx)+(b.speed<0?Math.PI:0);
+      b.boat.rotation.z=Math.sin(t*1.2+b.wave)*0.025;
+    });
+    gulls.forEach(g=>{
+      const a=g.phase+t*g.speed,x=Math.cos(a)*g.rx,z=Math.sin(a)*g.rz;
+      g.bird.position.set(x,g.alt+Math.sin(t*1.1+g.phase)*4,z);
+      g.bird.rotation.y=Math.atan2(Math.cos(a)*g.rz,-Math.sin(a)*g.rx)+(g.speed<0?Math.PI:0);
+      const flap=Math.sin(t*4.2+g.phase)*0.34;
+      g.bird.userData.wings.forEach(w=>{w.pivot.rotation.z=w.side*flap;});
     });
     spoonbills.forEach(sb => {
       const a = t * 0.22 + sb.off;
