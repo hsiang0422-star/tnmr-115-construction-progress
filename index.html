@@ -201,8 +201,8 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
 .timeline li.past .tag2{color:var(--warm);font-weight:500}
 
 
-.bus-gallery{grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px}.bus-gallery h3{margin:0 0 4px;font-size:17px}.bus-gallery p{margin:0 0 12px;color:var(--muted);font-size:13px}.bus-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.bus-photo{margin:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--card)}.bus-photo img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}.bus-photo figcaption{padding:9px 12px;font-size:13px;color:var(--muted)}
-@media(max-width:560px){.bus-photos{grid-template-columns:1fr}}
+.project-gallery{grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px}.project-gallery h3{margin:0 0 4px;font-size:17px}.project-gallery>p{margin:0 0 12px;color:var(--muted);font-size:13px}.project-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.project-photo{margin:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--card)}.project-photo a{display:block}.project-photo img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;transition:transform .2s}.project-photo a:hover img{transform:scale(1.025)}.project-photo figcaption{padding:9px 12px;font-size:13px;color:var(--muted)}.project-gallery .photo-empty{padding:14px;border:1px dashed var(--line);border-radius:10px;background:var(--card)}
+@media(max-width:560px){.project-photos{grid-template-columns:1fr}}
 
 .foot{margin-top:16px;font-size:13px;color:var(--muted)}
 .foot a{color:var(--land)}
@@ -723,6 +723,38 @@ const stage = document.getElementById("stage");
 const labelsEl = document.getElementById("labels");
 
 /* ---------- shared UI ---------- */
+const PROJECT_PHOTOS = {
+  // 影像來源：既有工程照片頁及大型巴士現況照；新增照片時只需追加到對應工程清單。
+  restroom:[
+    {src:"https://hsiang0422-star.github.io/tnmr-115-project-progress/photos/gf-20261107-1.jpg",date:"2026/11/07",caption:"小便斗區現況"},
+    {src:"https://hsiang0422-star.github.io/tnmr-115-project-progress/photos/gf-20261107-2.jpg",date:"2026/11/07",caption:"室內牆面及小便斗"},
+    {src:"https://hsiang0422-star.github.io/tnmr-115-project-progress/photos/gf-20261107-3.jpg",date:"2026/11/07",caption:"牆面及水龍頭"},
+    {src:"https://hsiang0422-star.github.io/tnmr-115-project-progress/photos/gf-20261107-4.jpg",date:"2026/11/07",caption:"地坪抹平施工中"}
+  ],
+  play:[
+    {src:"https://hsiang0422-star.github.io/tnmr-115-project-progress/photos/pe-20261107-1.jpg",date:"2026/11/07",caption:"遊具區現況"},
+    {src:"https://hsiang0422-star.github.io/tnmr-115-project-progress/photos/pe-20261107-2.jpg",date:"2026/11/07",caption:"體能器材區地墊"},
+    {src:"https://hsiang0422-star.github.io/tnmr-115-project-progress/photos/pe-20261107-3.jpg",date:"2026/11/07",caption:"基地地坪，器材堆放中"}
+  ],
+  bus:[
+    {src:"assets/bus-progress-1.jpg",date:"2026/11/20",caption:"大型巴士車體骨架與底盤組裝現況"},
+    {src:"assets/bus-progress-2.jpg",date:"2026/11/20",caption:"大型巴士車體骨架及底盤施工現況"}
+  ],
+  ramp:[],track:[],corridor:[]
+};
+function projectPhotoGallery(project){
+  const photos=PROJECT_PHOTOS[project.kind]||[];
+  const cards=photos.map(photo=>`<figure class="project-photo">
+    <a href="${photo.src}" target="_blank" rel="noopener noreferrer" aria-label="開啟照片：${photo.caption}">
+      <img src="${photo.src}" alt="${photo.caption}" loading="lazy">
+    </a><figcaption><b>${photo.date}</b> · ${photo.caption}</figcaption>
+  </figure>`).join("");
+  return `<section class="project-gallery" aria-label="${project.name}工程照片">
+    <h3>工程現況照片</h3>
+    <p>點照片可放大。新增照片到此工程的照片清單後，重新發布即可在報告中查看。</p>
+    ${photos.length?'<div class="project-photos">'+cards+'</div>':'<p class="photo-empty">目前尚無照片；新增此工程照片後會顯示於此處。</p>'}
+  </section>`;
+}
 function renderDetail(){
   const titleEl = document.getElementById("sheetTitle");
   const legendEl = document.getElementById("sheetLegend");
@@ -772,14 +804,7 @@ function renderDetail(){
       <h3 style="margin:14px 0 4px;font-size:16px">甘特進度圖（各階段任務）</h3>
       ${ganttHTML(active)}
     </div>
-    ${p.kind === "bus" ? `<section class="bus-gallery" aria-label="大型巴士目前進度照片">
-      <h3>大型巴士目前進度照片</h3>
-      <p>照片來自「11307新購校車」工程資料夾（2026/11/20 更新）</p>
-      <div class="bus-photos">
-        <figure class="bus-photo"><img src="assets/bus-progress-1.jpg" alt="大型巴士車體骨架與底盤組裝現況" loading="lazy"><figcaption>車體骨架與底盤組裝現況</figcaption></figure>
-        <figure class="bus-photo"><img src="assets/bus-progress-2.jpg" alt="大型巴士車體骨架及底盤施工現況" loading="lazy"><figcaption>車體骨架及底盤施工現況</figcaption></figure>
-      </div>
-    </section>` : ""}`;
+    ${projectPhotoGallery(p)};
 }
 function select(i){ openSheet(i); }
 const sheet = document.getElementById("sheet");
@@ -889,7 +914,7 @@ function init3D(){
   const WATER_LEVEL=ISLAND_LIFT-14;
   const seaGeo = new THREE.PlaneGeometry(1200, 1200, 112, 112);
   const seaWaveBase=seaGeo.attributes.position.array.slice();
-  const sea = new THREE.Mesh(seaGeo, surface({ color:0x3c9ac0, roughness:0.34, metalness:0.16, bumpScale:0.11, flatShading:false }));
+  const sea = new THREE.Mesh(seaGeo, surface({ color:0x3c9ac0, roughness:0.3, metalness:0.12, map:null, bumpMap:null, roughnessMap:null, flatShading:false }));
   sea.rotation.x = -Math.PI / 2;
   sea.position.y = WATER_LEVEL;
   sea.receiveShadow=true;
@@ -1554,13 +1579,13 @@ function init3D(){
       const shape=new THREE.Shape();
       shape.moveTo(0,0);shape.quadraticCurveTo(-1.5,side*1.7,-6.8,side*5.4);shape.quadraticCurveTo(-4.8,side*2.4,-2.4,side*0.2);shape.closePath();
       const wing=new THREE.Mesh(new THREE.ShapeGeometry(shape),side===1?gullMat:gullShade);
-      wing.rotation.x=side*Math.PI/2;pivot.add(wing);root.add(pivot);wings.push({pivot,side});
+      wing.rotation.x=Math.PI/2;pivot.add(wing);root.add(pivot);wings.push({pivot,side});
     }
     root.userData.wings=wings;return root;
   }
   const gulls=[];
   for(let i=0;i<15;i++){
-    const bird=makeGull();bird.scale.setScalar(SZ*(0.78+(i%4)*0.12));scene.add(bird);
+    const bird=makeGull();bird.scale.setScalar(SZ*(1.25+(i%4)*0.16));scene.add(bird);
     gulls.push({bird,phase:i*2.17,rx:118+(i*31)%168,rz:108+(i*23)%154,alt:ISLAND_LIFT+75+(i%5)*17,speed:(i%2?1:-1)*(0.014+(i%4)*0.003)});
   }
 
@@ -1746,7 +1771,7 @@ function init3D(){
   const boatColors=[0x477b89,0xb27443,0x5c8170,0x7a8790,0xa45b4f];
   for(let i=0;i<16;i++){
     const boat=makeBoat(boatColors[i%boatColors.length],i%3===0?0xf0e5cf:0xd7d5c9);
-    boat.scale.setScalar(SZ*(0.72+(i%3)*0.1));scene.add(boat);
+    boat.scale.setScalar(SZ*(1.25+(i%3)*0.17));scene.add(boat);
     boats.push({boat,phase:i*Math.PI*2/16,rx:126+(i*37)%145,rz:118+(i*29)%153,speed:(i%2?1:-1)*(0.018+(i%4)*0.003),wave:i*1.7});
   }
 
@@ -1979,7 +2004,7 @@ function init3D(){
       const waterPos=seaGeo.attributes.position;
       for(let i=0;i<waterPos.count;i++){
         const x=seaWaveBase[i*3],z=seaWaveBase[i*3+1];
-        waterPos.array[i*3+2]=Math.sin(x*0.018+t*0.8)*1.35+Math.sin(z*0.024-t*0.66)*0.95+Math.sin((x+z)*0.012+t*0.52)*1.15;
+        waterPos.array[i*3+2]=Math.sin(x*0.018+t*0.8)*2.0+Math.sin(z*0.024-t*0.66)*1.45+Math.sin((x+z)*0.012+t*0.52)*1.4;
       }
       waterPos.needsUpdate=true;seaGeo.computeVertexNormals();
     }
@@ -2056,7 +2081,7 @@ function init3D(){
       g.bird.position.set(x,g.alt+Math.sin(t*1.1+g.phase)*4,z);
       g.bird.rotation.y=Math.atan2(Math.cos(a)*g.rz,-Math.sin(a)*g.rx)+(g.speed<0?Math.PI:0);
       const flap=Math.sin(t*4.2+g.phase)*0.34;
-      g.bird.userData.wings.forEach(w=>{w.pivot.rotation.z=w.side*flap;});
+      g.bird.userData.wings.forEach(w=>{w.pivot.rotation.x=w.side*flap;});
     });
     spoonbills.forEach(sb => {
       const a = t * 0.22 + sb.off;
