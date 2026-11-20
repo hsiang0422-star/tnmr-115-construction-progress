@@ -751,7 +751,7 @@ function projectPhotoGallery(project){
   </figure>`).join("");
   return `<section class="project-gallery" aria-label="${project.name}工程照片">
     <h3>工程現況照片</h3>
-    <p>點照片可放大。新增照片到此工程的照片清單後，重新發布即可在報告中查看。</p>
+    <p>點照片可放大。新照片放入對應工程資料夾後，請我更新網站，就會同步顯示在這份報告。</p>
     ${photos.length?'<div class="project-photos">'+cards+'</div>':'<p class="photo-empty">目前尚無照片；新增此工程照片後會顯示於此處。</p>'}
   </section>`;
 }
@@ -912,9 +912,9 @@ function init3D(){
 
   // Cloud sea: cool atmospheric surface with restrained cloud banks.
   const WATER_LEVEL=ISLAND_LIFT-14;
-  const seaGeo = new THREE.PlaneGeometry(1200, 1200, 112, 112);
+  const seaGeo = new THREE.PlaneGeometry(2600, 2600, 160, 160);
   const seaWaveBase=seaGeo.attributes.position.array.slice();
-  const sea = new THREE.Mesh(seaGeo, surface({ color:0x3c9ac0, roughness:0.3, metalness:0.12, map:null, bumpMap:null, roughnessMap:null, flatShading:false }));
+  const sea = new THREE.Mesh(seaGeo, surface({ color:0x3c9ac0, roughness:0.27, metalness:0.24, map:null, bumpMap:null, roughnessMap:null, flatShading:false }));
   sea.rotation.x = -Math.PI / 2;
   sea.position.y = WATER_LEVEL;
   sea.receiveShadow=true;
@@ -1563,8 +1563,8 @@ function init3D(){
   }
 
   // A flock of gulls circles above the town and project islands.
-  const gullMat=new THREE.MeshStandardMaterial({color:0xf9fbfa,roughness:0.62});
-  const gullShade=new THREE.MeshStandardMaterial({color:0x8798a2,roughness:0.74,side:THREE.DoubleSide});
+  const gullMat=new THREE.MeshStandardMaterial({color:0xf9fbfa,roughness:0.62,side:THREE.DoubleSide});
+  const gullShade=new THREE.MeshStandardMaterial({color:0x71838e,roughness:0.74,side:THREE.DoubleSide});
   function makeGull(){
     const root=new THREE.Group();
     const body=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),gullMat);
@@ -1584,8 +1584,8 @@ function init3D(){
     root.userData.wings=wings;return root;
   }
   const gulls=[];
-  for(let i=0;i<15;i++){
-    const bird=makeGull();bird.scale.setScalar(SZ*(1.25+(i%4)*0.16));scene.add(bird);
+  for(let i=0;i<18;i++){
+    const bird=makeGull();bird.scale.setScalar(SZ*(1.65+(i%4)*0.17));scene.add(bird);
     gulls.push({bird,phase:i*2.17,rx:118+(i*31)%168,rz:108+(i*23)%154,alt:ISLAND_LIFT+75+(i%5)*17,speed:(i%2?1:-1)*(0.014+(i%4)*0.003)});
   }
 
@@ -1662,6 +1662,9 @@ function init3D(){
     const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.35,1.25,1.75),mat(cabinColor));cabin.position.set(-0.2,1.85,0);boat.add(cabin);
     const windowPane=new THREE.Mesh(new THREE.BoxGeometry(1.25,0.55,1.82),mat(0x47738a));windowPane.position.set(0.15,1.95,0);boat.add(windowPane);
     const bow=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,1.5,8),mat(0xf3d16c));bow.position.set(3.1,1.4,0);bow.rotation.z=Math.PI/2;boat.add(bow);
+    const wakeShape=new THREE.Shape();wakeShape.moveTo(-4,0);wakeShape.lineTo(-12,-1.1);wakeShape.quadraticCurveTo(-15,0,-12,1.1);wakeShape.closePath();
+    const wakeMat=new THREE.MeshBasicMaterial({color:0xc8edf2,transparent:true,opacity:0.62,depthWrite:false,side:THREE.DoubleSide});
+    const wake=new THREE.Mesh(new THREE.ShapeGeometry(wakeShape),wakeMat);wake.rotation.x=-Math.PI/2;wake.position.set(0,0.18,0);boat.add(wake);
     boat.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
     return boat;
   }
@@ -1769,10 +1772,10 @@ function init3D(){
   // Small fishing boats and harbor craft circle the island chain.
   const boats=[];
   const boatColors=[0x477b89,0xb27443,0x5c8170,0x7a8790,0xa45b4f];
-  for(let i=0;i<16;i++){
+  for(let i=0;i<20;i++){
     const boat=makeBoat(boatColors[i%boatColors.length],i%3===0?0xf0e5cf:0xd7d5c9);
-    boat.scale.setScalar(SZ*(1.25+(i%3)*0.17));scene.add(boat);
-    boats.push({boat,phase:i*Math.PI*2/16,rx:126+(i*37)%145,rz:118+(i*29)%153,speed:(i%2?1:-1)*(0.018+(i%4)*0.003),wave:i*1.7});
+    boat.scale.setScalar(SZ*(1.55+(i%3)*0.18));scene.add(boat);
+    boats.push({boat,phase:i*Math.PI*2/20,rx:126+(i*37)%145,rz:118+(i*29)%153,speed:(i%2?1:-1)*(0.018+(i%4)*0.003),wave:i*1.7});
   }
 
   const hubTag = document.createElement("div");
@@ -2072,7 +2075,7 @@ function init3D(){
     boats.forEach(b=>{
       const a=b.phase+t*b.speed,x=Math.cos(a)*b.rx,z=Math.sin(a)*b.rz;
       const wave=Math.sin(x*0.018+t*0.8)*1.35+Math.sin(z*0.024-t*0.66)*0.95+Math.sin((x+z)*0.012+t*0.52)*1.15;
-      b.boat.position.set(x,WATER_LEVEL+1.5+wave,z);
+      b.boat.position.set(x,WATER_LEVEL-0.25+wave,z);
       b.boat.rotation.y=Math.atan2(Math.cos(a)*b.rz,-Math.sin(a)*b.rx)+(b.speed<0?Math.PI:0);
       b.boat.rotation.z=Math.sin(t*1.2+b.wave)*0.025;
     });
