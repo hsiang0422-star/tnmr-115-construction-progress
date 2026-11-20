@@ -245,12 +245,7 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
     <div class="ctrl" id="ctrl">
       <div class="chead" title="拖曳移動，雙擊回到原位"><span>地圖操作</span><button class="cmin" id="cMin" type="button" aria-expanded="false">展開</button></div>
       <div class="cbody">
-        <h3>平移（按住連續移動）</h3>
-        <div class="pad">
-          <span></span><button type="button" data-act="pan" data-x="0" data-z="1" aria-label="往前平移">▲</button><span></span>
-          <button type="button" data-act="pan" data-x="-1" data-z="0" aria-label="往左平移">◀</button><button type="button" id="cHome" aria-label="回到總務處" title="回到總務處">⌂</button><button type="button" data-act="pan" data-x="1" data-z="0" aria-label="往右平移">▶</button>
-          <span></span><button type="button" data-act="pan" data-x="0" data-z="-1" aria-label="往後平移">▼</button><span></span>
-        </div>
+        <p style="margin:8px 0 2px;color:var(--muted);font-size:12px">總務處固定為畫面中心</p>
         <h3>旋轉・角度（按住連續作用）</h3>
         <div class="crow">
           <button type="button" data-act="rot" data-v="1">⟲ 左轉</button><button type="button" data-act="rot" data-v="-1">右轉 ⟳</button>
@@ -260,10 +255,6 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
         <div class="crow">
           <button type="button" data-act="zoom" data-v="-1">＋ 放大</button><button type="button" data-act="zoom" data-v="1">－ 縮小</button>
         </div>
-        <h3>滑鼠左鍵／單指拖曳</h3>
-        <div class="cmode" id="cmode">
-          <button type="button" data-m="rotate" aria-pressed="true">旋轉</button><button type="button" data-m="pan" aria-pressed="false">平移</button>
-        </div>
       </div>
       <div class="cgrip" id="cGrip" aria-hidden="true"></div>
     </div>
@@ -272,7 +263,6 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
       <div class="set-head"><span>地圖設定</span><button class="set-x" id="setClose" type="button" aria-label="關閉設定">×</button></div>
       <label class="set-row"><span>滾輪縮放靈敏度</span><output data-out="zoom"></output><input type="range" min="0.3" max="3" step="0.1" data-key="zoom"></label>
       <label class="set-row"><span>旋轉靈敏度</span><output data-out="rotate"></output><input type="range" min="0.3" max="3" step="0.1" data-key="rotate"></label>
-      <label class="set-row"><span>平移靈敏度</span><output data-out="pan"></output><input type="range" min="0.3" max="3" step="0.1" data-key="pan"></label>
       <label class="set-row"><span>環繞巡迴速度</span><output data-out="orbit"></output><input type="range" min="0" max="3" step="0.1" data-key="orbit"></label>
       <label class="set-row"><span>光線亮度</span><output data-out="light"></output><input type="range" min="0.4" max="1.8" step="0.1" data-key="light"></label>
       <button class="set-reset" id="setReset" type="button">恢復預設</button>
@@ -289,8 +279,7 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
       <button class="vbtn" type="button" data-view="side" aria-pressed="false">側視</button>
       <button class="vbtn" type="button" data-view="orbit" aria-pressed="false">環繞巡迴</button>
     </div>
-    <button class="mode" id="modeBtn" type="button" aria-pressed="false">平移模式</button>
-    <div class="hint">拖曳旋轉・滾輪縮放・點島嶼查看・右鍵拖曳平移・WASD 移動</div>
+    <div class="hint">總務處保持畫面中心・拖曳旋轉・滾輪縮放・點島嶼查看</div>
   </div>
 
   <div class="sheet" id="sheet" hidden>
@@ -1672,20 +1661,10 @@ function init3D(){
   const ndc = new THREE.Vector2();
   let down = null, dragging = false;
 
-  const modeBtn = document.getElementById("modeBtn");
-  let panMode = false;
-  modeBtn.addEventListener("click", () => {
-    panMode = !panMode;
-    modeBtn.setAttribute("aria-pressed", String(panMode));
-    modeBtn.textContent = panMode ? "平移中（點此切回旋轉）" : "平移模式";
-    canvas.style.cursor = panMode ? "move" : "";
-  });
   canvas.addEventListener("contextmenu", e => e.preventDefault());
 
-  const PAN_LIMIT = 350;
   canvas.addEventListener("pointerdown", e => {
-    const pan = panMode || e.button === 2 || e.shiftKey;
-    down = { x:e.clientX, y:e.clientY, th:sph.theta, ph:sph.phi, pan, origin:desired.clone() };
+    down = { x:e.clientX, y:e.clientY, th:sph.theta, ph:sph.phi, pan:false, origin:desired.clone() };
     dragging = false;
     canvas.setPointerCapture(e.pointerId);
   });
@@ -1729,19 +1708,6 @@ function init3D(){
     // trackpads send many small deltas and mice send large ones; normalise both to pixels
     const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1);
     const newR = Math.min(1000, Math.max(160, oldR * Math.exp(dy * 0.006 * MAP_SET.zoom)));
-    // zooming in drifts the focus toward the point under the cursor
-    if (newR < oldR){
-      const rect = canvas.getBoundingClientRect();
-      ndc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      ndc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      ray.setFromCamera(ndc, camera);
-      const hit = new THREE.Vector3();
-      if (ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -8), hit)){
-        const k = (1 - newR / oldR) * 0.35;
-        desired.x = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, desired.x + (hit.x - desired.x) * k));
-        desired.z = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, desired.z + (hit.z - desired.z) * k));
-      }
-    }
     sph.rTarget = newR;
     if (viewMode !== "free" && viewMode !== "orbit") setView("free");
   }, { passive:false });
@@ -1763,14 +1729,6 @@ function init3D(){
     fn();
   };
   const actions = {
-    pan(x, z){
-      const th = sph.theta, step = sph.r * 0.006 * MAP_SET.pan;
-      const right = new THREE.Vector3(Math.cos(th), 0, -Math.sin(th));
-      const fwd = new THREE.Vector3(-Math.sin(th), 0, -Math.cos(th));
-      desired.addScaledVector(right, x * step).addScaledVector(fwd, z * step);
-      desired.x = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, desired.x));
-      desired.z = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, desired.z));
-    },
     rot(v){ sph.theta += v * 0.02; },
     tilt(v){ sph.phi = Math.min(1.4, Math.max(0.08, sph.phi - v * 0.02)); },
     zoom(v){ sph.rTarget = Math.min(1000, Math.max(160, sph.rTarget * (1 + v * 0.03))); }
@@ -1789,7 +1747,7 @@ function init3D(){
     });
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(t => b.addEventListener(t, stopHold));
   });
-  document.getElementById("cHome").addEventListener("click", () => {
+  document.getElementById("cHome")?.addEventListener("click", () => {
     window.focusIsland(-1);
     setView("free");
     sph.rTarget = (stage.clientWidth / stage.clientHeight < 1 ? 720 : 520);
@@ -1891,7 +1849,7 @@ function init3D(){
 
   // keyboard: WASD / arrows move, Q / E rotate, + / - zoom
   const keys = new Set();
-  const MOVE_KEYS = ["w","a","s","d","q","e","+","=","-","_","arrowup","arrowdown","arrowleft","arrowright"];
+  const MOVE_KEYS = ["q","e","+","=","-","_"];
   window.addEventListener("keydown", e => {
     if (document.querySelector(".sheet:not([hidden])")) return;
     if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
@@ -1901,9 +1859,8 @@ function init3D(){
   window.addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
   window.addEventListener("blur", () => keys.clear());
 
-  window.focusIsland = i => {
-    if (i < 0) desired.set(hub.pos[0], ISLAND_LIFT + 8, hub.pos[1]);
-    else desired.set(projects[i].pos[0], ISLAND_LIFT + 8, projects[i].pos[1]);
+  window.focusIsland = () => {
+    desired.set(hub.pos[0], ISLAND_LIFT + 8, hub.pos[1]);
   };
   window.focusIsland(active);
 
@@ -1964,12 +1921,6 @@ function init3D(){
       const th = sph.theta, sp = sph.r * 0.01;
       const right = new THREE.Vector3(Math.cos(th), 0, -Math.sin(th));
       const fwd = new THREE.Vector3(-Math.sin(th), 0, -Math.cos(th));
-      if (has("a","arrowleft"))  desired.addScaledVector(right, -sp);
-      if (has("d","arrowright")) desired.addScaledVector(right, sp);
-      if (has("w","arrowup"))    desired.addScaledVector(fwd, sp);
-      if (has("s","arrowdown"))  desired.addScaledVector(fwd, -sp);
-      desired.x = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, desired.x));
-      desired.z = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, desired.z));
       if (has("q")) sph.theta += 0.02;
       if (has("e")) sph.theta -= 0.02;
       if (has("+","=")) sph.rTarget = Math.max(160, sph.rTarget * 0.985);
