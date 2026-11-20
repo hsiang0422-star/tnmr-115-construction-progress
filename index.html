@@ -1277,13 +1277,13 @@ function init3D(){
 
     // Eroded rock tapers to an irregular point instead of forming stacked toy-like shelves.
     const rockSegments=112, rockRings=24, rockPositions=[], rockColors=[], rockUvs=[], rockIndices=[];
-    const rockTopY=1, rockBottomY=-55;
+    const rockTopY=-14, rockBottomY=-65;
     const rockUpper=new THREE.Color(dark?0x827766:0x9c896d), rockLower=new THREE.Color(dark?0x4e5553:0x625b4f), rockTint=new THREE.Color();
     for(let j=0;j<=rockRings;j++){
       const v=j/rockRings, ringY=rockTopY-v*(rockTopY-rockBottomY);
       for(let k=0;k<=rockSegments;k++){
         const u=k/rockSegments, angle=u*Math.PI*2, coast=coastR(angle);
-        const baseRadius=r*coast*(0.91-0.12*Math.pow(v,0.82));
+        const baseRadius=r*coast*(1.0-0.14*Math.pow(v,0.82));
         const irregular=1+(0.035*Math.sin(angle*3+seed)+0.022*Math.sin(angle*7-seed*0.7)+0.012*Math.sin(angle*13+v*5))*v;
         const radius=baseRadius*irregular;
         const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
