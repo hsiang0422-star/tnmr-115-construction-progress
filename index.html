@@ -1461,6 +1461,18 @@ function init3D(){
   scatterDecor(hubIsle.group, hub.r, hy, 0, allLamps);
   boxIn(hubIsle.group, 20, 12, 14, P.bld, -20, hy + 6, -14);
   boxIn(hubIsle.group, 22, 1.5, 16, P.roof, -20, hy + 12.7, -14);
+
+  // A compact town square surrounds the General Affairs headquarters.
+  const townBlocks = [[-34,-34,0],[34,-34,1],[34,34,2],[-34,34,3]];
+  townBlocks.forEach(([x,z,i])=>{
+    const w=11+(i%2)*2, d=10+(i%2), h=8+(i%3)*2;
+    boxIn(hubIsle.group,w,h,d,P.bld,x,hy+h/2,z);
+    boxIn(hubIsle.group,w+2,1.2,d+2,i%2?P.roof:P.warm,x,hy+h+0.6,z);
+    boxIn(hubIsle.group,3.2,3.4,0.45,P.blue,x-2,hy+4,z+d/2+0.25);
+    boxIn(hubIsle.group,3.2,3.4,0.45,P.blue,x+2,hy+4,z+d/2+0.25);
+    boxIn(hubIsle.group,2.4,5.2,0.55,P.door,x,hy+2.6,z+d/2+0.3);
+    boxIn(hubIsle.group,w+1,0.7,2.5,i%2?P.blue:P.warm,x,hy+h-1.5,z+d/2+1.2);
+  });
   boxIn(hubIsle.group, 26, 0.8, 14, ASPHALT, 20, hy + 0.4, 14);
   [[14, 0xef4444], [20, 0x10b981], [26, 0xf8fafc]].forEach(([x, col]) => {
     const pc = makeCar(col);
@@ -1574,6 +1586,15 @@ function init3D(){
     }
   });
 
+  // Pedestrians stroll along the new town-side promenade around the hub.
+  for(let n=0;n<8;n++){
+    const angle=(n/8)*Math.PI*2+0.18, radius=31;
+    const walker=makeWalker("child");
+    walker.root.scale.setScalar(1.45);
+    hubIsle.group.add(walker.root);
+    walkers.push({walker,group:hubIsle.group,top:hy,radius,angle,speed:n%2?0.075:-0.075,phase:n*1.1+12});
+  }
+
   // Curved paved roads inspired by Meshy's "Curved Road Fixed" model.
   // Each road has a gently raised bridge deck, natural arc, pale shoulders,
   // asphalt, painted edges, a broken center line, and quiet concrete curbs.
@@ -1626,6 +1647,52 @@ function init3D(){
     [[0,1,0x3b82f6],[0.25,-1,0xf59e0b],[0.5,1,0x3b8c74],[0.75,-1,0xd8554d]].forEach(([s0,dir,col])=>{
       const car=makeCar(col);car.scale.setScalar(0.72);scene.add(car);
       islandMovers.push({car,curve:loop,s0,dir,speed:0.065});
+    });
+  });
+
+  // Town boulevard and elevated links reconnect every project island to the hub.
+  const townRoadY=ISLAND_LIFT+hubIsle.top+1.1, townPts=[];
+  for(let k=0;k<20;k++){
+    const a=k*Math.PI*2/20;
+    townPts.push(new THREE.Vector3(Math.cos(a)*39,townRoadY,Math.sin(a)*36));
+  }
+  const townLoop=new THREE.CatmullRomCurve3(townPts,true,"centripetal",0.38);
+  addRoadStrip(townLoop,12,0,0,roadDeckMat,0,1,96);
+  addRoadStrip(townLoop,8.4,0,0.18,roadMat,0,1,96);
+  [-4.35,4.35].forEach(side=>addRoadStrip(townLoop,0.28,side,0.23,roadLineMat,0,1,96));
+  for(let n=0;n<24;n+=2)addRoadStrip(townLoop,0.34,0,0.24,centerLineMat,n/24,(n+1)/24,8);
+  [[0,1,0x2866c7],[0.34,-1,0xe7a12e],[0.68,1,0x4c8765]].forEach(([s0,dir,col])=>{
+    const car=makeCar(col);car.scale.setScalar(0.78);scene.add(car);
+    islandMovers.push({car,curve:townLoop,s0,dir,speed:0.052});
+  });
+
+  isles.forEach((isle,i)=>{
+    const project=projects[i], dx=project.pos[0], dz=project.pos[1];
+    const len=Math.hypot(dx,dz), ux=dx/len, uz=dz/len, span=len-39-project.r*0.34;
+    const y0=townRoadY, y1=ISLAND_LIFT+isle.top+1.1;
+    const start=new THREE.Vector3(ux*39,y0,uz*36);
+    const end=new THREE.Vector3(dx-ux*project.r*0.34,y1,dz-uz*project.r*0.34);
+    const sideX=-uz, sideZ=ux, bend=(i%2?1:-1)*Math.min(8,span*0.08);
+    const c1=new THREE.Vector3(start.x+ux*span*0.32+sideX*bend,y0+15,start.z+uz*span*0.32+sideZ*bend);
+    const c2=new THREE.Vector3(end.x-ux*span*0.32+sideX*bend,y1+15,end.z-uz*span*0.32+sideZ*bend);
+    const link=new THREE.CubicBezierCurve3(start,c1,c2,end);
+    addRoadStrip(link,13,0,0,roadDeckMat,0,1,88);
+    addRoadStrip(link,9.2,0,0.18,roadMat,0,1,88);
+    [-4.8,4.8].forEach(side=>addRoadStrip(link,0.28,side,0.23,roadLineMat,0,1,88));
+    for(let n=0;n<24;n+=2)addRoadStrip(link,0.34,0,0.24,n%4===0?centerLineMat:roadLineMat,n/24,(n+1)/24,8);
+    [-1,1].forEach(side=>{
+      const railPts=[];
+      for(let j=0;j<=16;j++){
+        const u=j/16,p=link.getPointAt(u),tan=link.getTangentAt(u),normal=new THREE.Vector3(-tan.z,0,tan.x).normalize();
+        p.addScaledVector(normal,side*5.55);p.y+=2.3;railPts.push(p);
+      }
+      const railCurve=new THREE.CatmullRomCurve3(railPts,false,"centripetal",0.35);
+      const rail=new THREE.Mesh(new THREE.TubeGeometry(railCurve,80,0.32,6,false),mat(P.pole));
+      rail.castShadow=true;scene.add(rail);
+    });
+    [[0.18,1,0xe3a23c],[0.68,-1,0x387bc1]].forEach(([s0,dir,col])=>{
+      const car=makeCar(col);car.scale.setScalar(0.74);scene.add(car);
+      islandMovers.push({car,curve:link,s0,dir,speed:0.042});
     });
   });
 
