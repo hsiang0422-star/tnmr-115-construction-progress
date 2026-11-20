@@ -1192,7 +1192,7 @@ function init3D(){
       const inside = sstep(0, 0.14, coastR(th) - d);          // 0 at the shore, 1 well inland
       const hills = pos.getY(i);   // THREE.Terrain height, 0..1
       const rolling = (fbm(px * 1.12 + ox, pz * 1.12 + oz) - 0.42) * 4.2;
-      const natural = -14 + inside * (14 + top * 0.43 * hills + rolling);  // irregular, gently rolling slopes
+      const natural = -38 + inside * (38 + top * 0.43 * hills + rolling);  // outer terrain falls below the rock shelves, leaving a clean floating silhouette
       const plateau = 1 - sstep(0.72, 1.0, d);                 // preserve a broad, level engineering work area
       const y = natural * (1 - plateau) + top * plateau;
       pos.setY(i, y);
@@ -1553,7 +1553,7 @@ function init3D(){
       const radius=project.r*0.43;
       walker.root.position.set(Math.cos(angle)*radius,isle.top+0.3,Math.sin(angle)*radius);
       walker.root.rotation.y=-angle+Math.PI/2;
-      walker.root.scale.setScalar(1.58);
+      walker.root.scale.setScalar(2.1);
       isle.o.group.add(walker.root);
       walkers.push({walker,group:isle.o.group,top:isle.top,radius,angle,speed:(n%2?1:-1)*(0.12+islandIndex*0.006),phase:n*1.3+islandIndex});
     }
