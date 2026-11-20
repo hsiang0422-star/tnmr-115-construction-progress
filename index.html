@@ -816,38 +816,73 @@ function init3D(){
   const dark = document.documentElement.dataset.theme === "dark" ||
     (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
   const P = dark
-    ? { sky:0x152c40, sea:0x234c67, sand:0x777567, land:0x85aa9b, hub:0x69aeb1, warm:0xdfb46f,
-        bridge:0x71818e, bld:0xe0e8ee, pole:0xaab8c2, blue:0x75a6c7, roof:0x9c6559, door:0x514b48,
-        grass:0x60846d, leaf:0x72977a, trunk:0x65594e, play:0xc4a965, track:0x9b7466 }
-    : { sky:0x85c9f2, sea:0x4fa8d7, sand:0xc4b79a, land:0x67a98d, hub:0x2d8298, warm:0xc58a4b,
-        bridge:0x8a9aa5, bld:0xf1f5f6, pole:0x8293a0, blue:0x3785ae, roof:0x985c50, door:0x66584d,
-        grass:0x78a96b, leaf:0x60935f, trunk:0x77634f, play:0xcbb16d, track:0xa06e5e };
+    ? { sky:0x203348, sea:0x35566d, sand:0x776d5d, land:0x67785b, hub:0x587c79, warm:0xc39a62,
+        bridge:0x676d6d, bld:0xc9c8bf, pole:0x555e5d, blue:0x587c8a, roof:0x754d42, door:0x423832,
+        grass:0x596b45, leaf:0x45613e, trunk:0x514438, play:0x91704b, track:0x704b40 }
+    : { sky:0xa8d1e8, sea:0x567f99, sand:0xb2a287, land:0x56764e, hub:0x477773, warm:0xb58755,
+        bridge:0x97958d, bld:0xd7d4cb, pole:0x5a625e, blue:0x527e93, roof:0x87564a, door:0x51443b,
+        grass:0x748853, leaf:0x466842, trunk:0x59483a, play:0x98734d, track:0x754f43 };
 
   const ASPHALT = dark ? 0x4b5563 : 0x8b96a3;
   const renderer = new THREE.WebGLRenderer({ antialias:true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.08;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   stage.prepend(renderer.domElement);
 
   const ISLAND_LIFT = 66;
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(P.sky);
-  scene.fog = new THREE.Fog(P.sky, 500, 1200);
+  scene.fog = new THREE.Fog(P.sky, 760, 1650);
 
   const camera = new THREE.PerspectiveCamera(40, 1, 1, 2500);
   const sph = { theta:0.5, phi:0.95, r:520, rTarget:520 };
   const target = new THREE.Vector3(0, ISLAND_LIFT + 8, 0);
   const desired = new THREE.Vector3(0, 8, 0);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 1.22);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.72);
   scene.add(ambient);
+  const skyFill = new THREE.HemisphereLight(0xc7e2f3, 0x776a55, 0.62);
+  scene.add(skyFill);
   const allLamps = [];
-  const sun = new THREE.DirectionalLight(0xffffff, 1.48);
-  sun.position.set(200, 400, 150);
+  const sun = new THREE.DirectionalLight(0xffffff, 2.15);
+  sun.position.set(220, 440, 180);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left = -420; sun.shadow.camera.right = 420;
+  sun.shadow.camera.top = 420; sun.shadow.camera.bottom = -420;
+  sun.shadow.camera.near = 1; sun.shadow.camera.far = 1100;
+  sun.shadow.bias = -0.00018; sun.shadow.normalBias = 0.035; sun.shadow.radius = 3;
   scene.add(sun);
 
   // Clean, precise engineering surfaces with restrained matte reflections.
+  function makeGrainTexture(seed=17, size=384, contrast=28){
+    const canvas=document.createElement("canvas");canvas.width=canvas.height=size;
+    const ctx=canvas.getContext("2d"),image=ctx.createImageData(size,size);
+    let state=seed>>>0;
+    const rand=()=>{state=(state*1664525+1013904223)>>>0;return state/4294967296;};
+    for(let i=0;i<image.data.length;i+=4){
+      const n=Math.round(226+(rand()-0.5)*contrast);
+      image.data[i]=n;image.data[i+1]=n;image.data[i+2]=n;image.data[i+3]=255;
+    }
+    ctx.putImageData(image,0,0);
+    for(let i=0;i<size*3;i++){
+      const v=130+Math.floor(rand()*105),alpha=0.035+rand()*0.08;
+      ctx.fillStyle="rgba("+v+","+v+","+v+","+alpha+")";
+      const x=Math.floor(rand()*size),y=Math.floor(rand()*size),s=0.35+rand()*1.3;
+      ctx.beginPath();ctx.ellipse(x,y,s*2,s,rand()*Math.PI,0,Math.PI*2);ctx.fill();
+    }
+    const texture=new THREE.CanvasTexture(canvas);
+    texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+    texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());texture.needsUpdate=true;
+    return texture;
+  }
+  const fineGrain=makeGrainTexture(31,384,24), stoneGrain=makeGrainTexture(77,384,42);
   const surface = (options = {}) => new THREE.MeshStandardMaterial({
-    roughness:0.78, metalness:0.025, ...options
+    roughness:0.88, metalness:0.015, map:fineGrain, bumpMap:fineGrain, bumpScale:0.055, ...options
   });
 
   // Cloud sea: cool atmospheric surface with restrained cloud banks.
@@ -856,10 +891,10 @@ function init3D(){
   sea.rotation.x = -Math.PI / 2;
   sea.position.y = -220; // keep the water color available for sky settings, but do not render an ocean below the islands
 
-  const cloudGeo = new THREE.SphereGeometry(1, 14, 10);
+  const cloudGeo = new THREE.SphereGeometry(1, 32, 20);
   const cloudMat = surface({
-    color:0xf7fcff, roughness:0.86, transparent:true, opacity:0.86, depthWrite:false,
-    emissive:0xc5e1f2, emissiveIntensity:0.045
+    color:0xfafcff, roughness:0.98, transparent:true, opacity:0.68, depthWrite:false,
+    emissive:0xb4d2e6, emissiveIntensity:0.018
   });
   const cloudBanks = [];
   const cloudAnchors = [
@@ -876,7 +911,7 @@ function init3D(){
     const bank = new THREE.Group();
     puffLayout.forEach(([dx,dy,dz,size]) => {
       const puff = new THREE.Mesh(cloudGeo, cloudMat);
-      puff.scale.set(34 * size * scale, 11 * size * scale, 24 * size * scale);
+      puff.scale.set(27 * size * scale, 7.5 * size * scale, 19 * size * scale);
       puff.position.set(dx * scale, dy + (index % 3) * 0.45, dz * scale);
       bank.add(puff);
     });
@@ -930,15 +965,16 @@ function init3D(){
   const SZ = 1.45;
   let CUR_TOP = 0;
   const Y = y => CUR_TOP + (y - CUR_TOP) * SZ;
-  const mat = c => surface({ color:c, roughness:1 });
+  const mat = c => surface({ color:c, roughness:0.94 });
   function boxRaw(g, w, h, d, c, x, y, z, rz = 0, ry = 0){
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
     m.position.set(x, y, z); m.rotation.set(0, ry, rz);
+    m.castShadow = true; m.receiveShadow = true;
     g.add(m); return m;
   }
   function cylRaw(g, rt, rb, h, c, x, y, z, seg = 10){
     const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat(c));
-    m.position.set(x, y, z); g.add(m); return m;
+    m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; g.add(m); return m;
   }
   function boxIn(g, w, h, d, c, x, y, z, rz = 0, ry = 0){
     return boxRaw(g, w * SZ, h * SZ, d * SZ, c, x * SZ, Y(y), z * SZ, rz, ry);
@@ -947,27 +983,22 @@ function init3D(){
     return cylRaw(g, rt * SZ, rb * SZ, h * SZ, c, x * SZ, Y(y), z * SZ, seg);
   }
   function tree(g, x, z, y, s = 1){
-    cylIn(g, 1 * s, 1.3 * s, 7 * s, P.trunk, x, y + 3.5 * s, z, 7);
-    const form = Math.abs(Math.sin(x * 12.9898 + z * 78.233));
-    if (form < 0.38){
-      // Varied conifers break up the repeated round crowns.
-      for (let tier = 0; tier < 3; tier++){
-        const radius = (5.8 - tier * 1.15) * s * SZ;
-        const height = 8.5 * s * SZ;
-        const crown = new THREE.Mesh(new THREE.ConeGeometry(radius, height, 7, 1), mat(tier === 1 ? P.grass : P.leaf));
-        crown.position.set(x * SZ, Y(y + (8 + tier * 4.3) * s), z * SZ);
-        g.add(crown);
+    const trunk=cylIn(g,0.9*s,1.5*s,8*s,P.trunk,x,y+4*s,z,14);trunk.castShadow=true;trunk.receiveShadow=true;
+    const form=Math.abs(Math.sin(x*12.9898+z*78.233));
+    if(form<0.34){
+      for(let tier=0;tier<4;tier++){
+        const radius=(6.6-tier*1.15)*s*SZ,height=9.2*s*SZ;
+        const crown=new THREE.Mesh(new THREE.ConeGeometry(radius,height,18,5),mat(tier===1?P.grass:P.leaf));
+        crown.position.set(x*SZ,Y(y+(7.5+tier*4.1)*s),z*SZ);crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
       }
-    } else {
-      // Irregular, clustered crowns create broadleaf trees with a more natural silhouette.
-      const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(5.4 * s * SZ, 1), mat(P.leaf));
-      crown.scale.set(1.05, 0.92, 0.9);
-      crown.position.set(x * SZ, Y(y + 9.2 * s), z * SZ);
-      g.add(crown);
-      for (const [dx,dy,dz,scale] of [[-2.8,1.2,1.4,0.65],[2.7,0.2,-1.2,0.72]]){
-        const clump = new THREE.Mesh(new THREE.IcosahedronGeometry(3.5 * s * SZ * scale, 1), mat(P.grass));
-        clump.position.set((x + dx * s) * SZ, Y(y + (9.5 + dy) * s), (z + dz * s) * SZ);
-        g.add(clump);
+    }else{
+      const clumps=[[-2.8,8.3,0,5.4,0.86],[2.2,9.4,1.4,5.8,0.92],[0,12.4,-1.6,5.2,1.02],[-0.8,14.2,0.2,4.6,0.84]];
+      clumps.forEach(([dx,dy,dz,radius,stretch],i)=>{
+        const crown=new THREE.Mesh(new THREE.SphereGeometry(radius*s*SZ,20,14),mat(i%2?P.grass:P.leaf));
+        crown.position.set((x+dx*s)*SZ,Y(y+dy*s),(z+dz*s)*SZ);crown.scale.set(stretch,0.86,0.96);crown.castShadow=true;crown.receiveShadow=true;g.add(crown);
+      });
+      for(const [dx,dz,rz] of [[-3,-1,-0.45],[3,1,0.45]]){
+        const branch=cylIn(g,0.32*s,0.55*s,5*s,P.trunk,x+dx*s,y+8*s,z+dz*s,10);branch.rotation.z=rz;
       }
     }
   }
@@ -1015,7 +1046,7 @@ function init3D(){
   }
   function makeCar(color){
     const c = new THREE.Group();
-    const paint = new THREE.MeshStandardMaterial({ color, roughness:0.27, metalness:0.3 });
+    const paint = new THREE.MeshPhysicalMaterial({ color, roughness:0.24, metalness:0.42, clearcoat:0.9, clearcoatRoughness:0.2 });
     const glass = new THREE.MeshStandardMaterial({ color:0x294b60, roughness:0.24, metalness:0.12, transparent:true, opacity:0.9 });
     const rubber = new THREE.MeshStandardMaterial({ color:0x20252a, roughness:0.82 });
     const chrome = new THREE.MeshStandardMaterial({ color:0xd9e0e3, roughness:0.3, metalness:0.72 });
@@ -1163,7 +1194,7 @@ function init3D(){
     // THREE.Terrain generates the hills (island-shaped, seeded per island)
     const gen = TerrainLib({
       heightmap: TerrainNS.HillIsland,
-      xSize: r * 2.6, ySize: r * 2.6, xSegments: 72, ySegments: 72,
+      xSize: r * 2.6, ySize: r * 2.6, xSegments: 144, ySegments: 144,
       minHeight: 0, maxHeight: 1, stretch: true,
       random: createSeededRandom(seed * 1000 + 7)
     });
@@ -1184,7 +1215,9 @@ function init3D(){
       const plateau = 1 - sstep(0.72, 1.0, d);                 // preserve a broad, level engineering work area
       const y = natural * (1 - plateau) + top * plateau;
       pos.setY(i, y);
-      c.copy(cSand).lerp(cGrass, sstep(0.6, 3.5, y)).lerp(cLand, plateau * 0.9);
+      const soilNoise=fbm(px*4.6+ox,pz*4.6+oz);
+      c.copy(cSand).lerp(cGrass, sstep(0.6, 3.5, y)).lerp(cLand, plateau * 0.82);
+      c.multiplyScalar(0.91+soilNoise*0.2);
       cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
     }
     // Clip the terrain mesh to its irregular coastline. Lowering outside vertices alone leaves broad triangular sheets between islands.
@@ -1202,45 +1235,40 @@ function init3D(){
     geo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
     geo.computeVertexNormals();
     const terrain = new THREE.Mesh(geo, surface({
-      vertexColors:true, roughness:1, flatShading:true, bumpScale:0.18
+      vertexColors:true, roughness:0.97, map:fineGrain, bumpMap:fineGrain, bumpScale:0.12, flatShading:false
     }));
+    terrain.receiveShadow = true; terrain.castShadow = true;
     group.add(terrain);
 
-    // Five offset sedimentary shelves form the stepped, tapering cliff profile of a floating cascade island.
-    const strata = [
-      { top:0.98, bottom:0.85, height:5.8, y:top * 0.58 - 2.9, color:dark ? 0x69747b : 0xa9906f },
-      { top:0.88, bottom:0.76, height:4.4, y:top * 0.43 - 4.0, color:dark ? 0x59666e : 0x927a5f },
-      { top:0.79, bottom:0.64, height:5.0, y:top * 0.29 - 4.5, color:dark ? 0x778189 : 0xb29a76 },
-      { top:0.67, bottom:0.49, height:5.4, y:top * 0.13 - 5.0, color:dark ? 0x626e76 : 0x85745e },
-      { top:0.52, bottom:0.14, height:22, y:-10, color:dark ? 0x4e5c65 : 0x716657 }
-    ];
-    strata.forEach((layer, index) => {
-      const rockGeo = new THREE.CylinderGeometry(r * layer.top, r * layer.bottom, layer.height, 18, 2, false);
-      const rockPos = rockGeo.attributes.position;
-      for (let v = 0; v < rockPos.count; v++){
-        const x = rockPos.getX(v), z = rockPos.getZ(v), y = rockPos.getY(v);
-        const angle = Math.atan2(z, x);
-        const radial = 1
-          + 0.075 * Math.sin(angle * 3 + seed * 0.8)
-          + 0.045 * Math.sin(angle * 6 - seed * 1.2)
-          + 0.025 * Math.sin(angle * 11 + index);
-        const edge = Math.min(1, Math.hypot(x, z) / (r * Math.max(layer.top, layer.bottom)));
-        rockPos.setXYZ(
-          v,
-          x * radial,
-          y + edge * 0.7 * Math.sin(angle * 4 + seed + index * 0.7),
-          z * radial
-        );
+    // Eroded rock tapers to an irregular point instead of forming stacked toy-like shelves.
+    const rockSegments=72, rockRings=14, rockPositions=[], rockColors=[], rockUvs=[], rockIndices=[];
+    const rockUpper=new THREE.Color(dark?0x827766:0x9c896d), rockLower=new THREE.Color(dark?0x4e5553:0x625b4f), rockTint=new THREE.Color();
+    for(let j=0;j<=rockRings;j++){
+      const v=j/rockRings, baseRadius=r*(0.97-0.84*Math.pow(v,0.82));
+      const ringY=top*0.56-1-v*(top*0.56+31);
+      for(let k=0;k<=rockSegments;k++){
+        const u=k/rockSegments, angle=u*Math.PI*2;
+        const irregular=1+0.055*Math.sin(angle*3+seed)+0.032*Math.sin(angle*7-seed*0.7)+0.02*Math.sin(angle*13+v*5);
+        const radius=baseRadius*irregular;
+        const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
+        const y=ringY+Math.sin(angle*4+seed*1.7)*2.2*v+Math.sin(angle*9+seed)*0.8*v;
+        rockPositions.push(x,y,z);rockUvs.push(u,v);
+        rockTint.copy(rockUpper).lerp(rockLower,v).multiplyScalar(0.96+0.035*Math.sin(v*45+Math.sin(angle*3+seed)));
+        rockColors.push(rockTint.r,rockTint.g,rockTint.b);
       }
-      rockGeo.computeVertexNormals();
-      const rock = new THREE.Mesh(rockGeo, surface({ color:layer.color, roughness:0.9, flatShading:true }));
-      rock.position.y = layer.y;
-      rock.rotation.y = seed * 0.31 + index * 0.13;
-      rock.scale.set(1 + Math.sin(seed + index) * 0.035, 1, 0.94 + Math.cos(seed + index) * 0.04);
-      group.add(rock);
-    });
+    }
+    for(let j=0;j<rockRings;j++)for(let k=0;k<rockSegments;k++){
+      const a=j*(rockSegments+1)+k,b=a+rockSegments+1;
+      rockIndices.push(a,b,a+1,a+1,b,b+1);
+    }
+    const rockGeo=new THREE.BufferGeometry();
+    rockGeo.setAttribute("position",new THREE.Float32BufferAttribute(rockPositions,3));
+    rockGeo.setAttribute("color",new THREE.Float32BufferAttribute(rockColors,3));
+    rockGeo.setAttribute("uv",new THREE.Float32BufferAttribute(rockUvs,2));
+    rockGeo.setIndex(rockIndices);rockGeo.computeVertexNormals();
+    const rock=new THREE.Mesh(rockGeo,surface({vertexColors:true,map:stoneGrain,bumpMap:stoneGrain,bumpScale:0.18,roughness:0.98,flatShading:false}));
+    rock.castShadow=true;rock.receiveShadow=true;group.add(rock);
 
-    // Leave the underside open; distant clouds remain separate from the rock base.
     return { group, base:terrain, land:terrain, top };
   }
 
@@ -1510,7 +1538,7 @@ function init3D(){
     const root = new THREE.Group();
     const palette = { rabbit:[0xf1e6d7,0xd99b9b], bear:[0x9b6847,0xf0c891], dog:[0xe8bd73,0x8e593b], capybara:[0xb8895c,0x60402e], child:[0x397fb2,0xf0bd83] }[kind];
     const fur=mat(palette[0]), accent=mat(palette[1]), darkEye=mat(0x332b29), shirt=mat(kind==="child"?[0x45a0ca,0xf08c5c,0x73a66b][Math.floor(Math.random()*3)]:palette[0]);
-    const ball=(g,m,x,y,z,sx,sy,sz)=>{const q=new THREE.Mesh(new THREE.SphereGeometry(1,12,10),m);q.position.set(x,y,z);q.scale.set(sx,sy,sz);g.add(q);return q;};
+    const ball=(g,m,x,y,z,sx,sy,sz)=>{const q=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),m);q.position.set(x,y,z);q.scale.set(sx,sy,sz);q.castShadow=true;q.receiveShadow=true;g.add(q);return q;};
     ball(root,kind==="child"?shirt:fur,0,0.88,0,0.48,0.65,0.38);
     ball(root,fur,0,1.63,0.06,0.43,0.43,0.4);
     ball(root,darkEye,-0.15,1.7,0.405,0.045,0.055,0.035);ball(root,darkEye,0.15,1.7,0.405,0.045,0.055,0.035);
