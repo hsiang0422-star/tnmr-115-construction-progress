@@ -1273,7 +1273,7 @@ function init3D(){
     }
     for(let j=0;j<rockRings;j++)for(let k=0;k<rockSegments;k++){
       const a=j*(rockSegments+1)+k,b=a+rockSegments+1;
-      rockIndices.push(a,b,a+1,a+1,b,b+1);
+      rockIndices.push(a,a+1,b,a+1,b+1,b);
     }
     const rockGeo=new THREE.BufferGeometry();
     rockGeo.setAttribute("position",new THREE.Float32BufferAttribute(rockPositions,3));
