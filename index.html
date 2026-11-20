@@ -1821,7 +1821,7 @@ function init3D(){
   canvas.addEventListener("pointerup", endTouch);
   canvas.addEventListener("pointercancel", endTouch);
 
-  // keyboard: WASD / arrows move, Q / E rotate, + / - zoom
+  // keyboard: Q / E rotate, + / - zoom around the fixed hub center
   const keys = new Set();
   const MOVE_KEYS = ["q","e","+","=","-","_"];
   window.addEventListener("keydown", e => {
