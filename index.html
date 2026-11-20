@@ -1192,9 +1192,9 @@ function init3D(){
       const inside = sstep(0, 0.14, coastR(th) - d);          // 0 at the shore, 1 well inland
       const hills = pos.getY(i);   // THREE.Terrain height, 0..1
       const rolling = (fbm(px * 1.12 + ox, pz * 1.12 + oz) - 0.42) * 4.2;
-      const natural = -38 + inside * (38 + top * 0.43 * hills + rolling);  // outer terrain falls below the rock shelves, leaving a clean floating silhouette
+      const natural = -14 + inside * (14 + top * 0.43 * hills + rolling);  // irregular, gently rolling slopes
       const plateau = 1 - sstep(0.72, 1.0, d);                 // preserve a broad, level engineering work area
-      const y = natural * (1 - plateau) + top * plateau;
+      const y = d > coastR(th) ? -38 : natural * (1 - plateau) + top * plateau; // hide the terrain square below the tapered rock shelves
       pos.setY(i, y);
       c.copy(cSand).lerp(cGrass, sstep(0.6, 3.5, y)).lerp(cLand, plateau * 0.9);
       cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
