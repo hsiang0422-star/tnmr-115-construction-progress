@@ -881,10 +881,6 @@ function init3D(){
     return texture;
   }
   const fineGrain=makeGrainTexture(31,384,24), stoneGrain=makeGrainTexture(77,384,42);
-  const groundTexture=new THREE.TextureLoader().load("assets/ground-realistic.jpg");
-  groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;groundTexture.repeat.set(9,9);groundTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
-  const rockTexture=new THREE.TextureLoader().load("assets/cliff-realistic.jpg");
-  rockTexture.colorSpace=THREE.SRGBColorSpace;rockTexture.wrapS=rockTexture.wrapT=THREE.RepeatWrapping;rockTexture.repeat.set(7,2.4);rockTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
   const surface = (options = {}) => new THREE.MeshStandardMaterial({
     roughness:0.88, metalness:0.015, map:fineGrain, bumpMap:fineGrain, bumpScale:0.055, ...options
   });
@@ -1249,7 +1245,7 @@ function init3D(){
     geo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
     geo.computeVertexNormals();
     const terrain = new THREE.Mesh(geo, surface({
-      vertexColors:true, roughness:0.98, map:groundTexture, roughnessMap:fineGrain, bumpMap:groundTexture, bumpScale:0.07, flatShading:false
+      vertexColors:true, roughness:0.98, map:fineGrain, roughnessMap:fineGrain, bumpMap:fineGrain, bumpScale:0.045, flatShading:false
     }));
     terrain.receiveShadow = true; terrain.castShadow = true;
     group.add(terrain);
@@ -1280,7 +1276,7 @@ function init3D(){
     rockGeo.setAttribute("color",new THREE.Float32BufferAttribute(rockColors,3));
     rockGeo.setAttribute("uv",new THREE.Float32BufferAttribute(rockUvs,2));
     rockGeo.setIndex(rockIndices);rockGeo.computeVertexNormals();
-    const rock=new THREE.Mesh(rockGeo,surface({vertexColors:true,map:rockTexture,roughnessMap:stoneGrain,bumpMap:rockTexture,bumpScale:0.22,roughness:0.99,flatShading:false}));
+    const rock=new THREE.Mesh(rockGeo,surface({vertexColors:true,map:stoneGrain,roughnessMap:stoneGrain,bumpMap:stoneGrain,bumpScale:0.08,roughness:0.99,flatShading:false}));
     rock.castShadow=true;rock.receiveShadow=true;group.add(rock);
 
     return { group, base:terrain, land:terrain, top };
