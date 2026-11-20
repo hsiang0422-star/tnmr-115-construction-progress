@@ -1664,7 +1664,7 @@ function init3D(){
   canvas.addEventListener("contextmenu", e => e.preventDefault());
 
   canvas.addEventListener("pointerdown", e => {
-    down = { x:e.clientX, y:e.clientY, th:sph.theta, ph:sph.phi, pan:false, origin:desired.clone() };
+    down = { x:e.clientX, y:e.clientY, th:sph.theta, ph:sph.phi };
     dragging = false;
     canvas.setPointerCapture(e.pointerId);
   });
@@ -1673,22 +1673,8 @@ function init3D(){
     const dx = e.clientX - down.x, dy = e.clientY - down.y;
     if (Math.hypot(dx, dy) > 5) dragging = true;
     if (!dragging) return;
-    if (down.pan){
-      // slide the focus point across the sea, in the direction the camera is facing
-      const k = sph.r * 0.0015 * MAP_SET.pan;
-      const th = sph.theta;
-      const right = new THREE.Vector3(Math.cos(th), 0, -Math.sin(th));
-      const fwd = new THREE.Vector3(-Math.sin(th), 0, -Math.cos(th));
-      const p = down.origin.clone().addScaledVector(right, -dx * k).addScaledVector(fwd, dy * k);
-      p.x = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, p.x));
-      p.z = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, p.z));
-      p.y = 8;
-      desired.copy(p);
-      target.copy(p);
-    } else {
-      sph.theta = down.th - dx * 0.008 * MAP_SET.rotate;
-      if (viewMode === "free") sph.phi = Math.min(1.4, Math.max(0.08, down.ph - dy * 0.005 * MAP_SET.rotate));
-    }
+    sph.theta = down.th - dx * 0.008 * MAP_SET.rotate;
+    if (viewMode === "free") sph.phi = Math.min(1.4, Math.max(0.08, down.ph - dy * 0.005 * MAP_SET.rotate));
   });
   canvas.addEventListener("pointerup", e => {
     if (down && !dragging){
@@ -1747,11 +1733,6 @@ function init3D(){
     });
     ["pointerup", "pointercancel", "lostpointercapture"].forEach(t => b.addEventListener(t, stopHold));
   });
-  document.getElementById("cHome")?.addEventListener("click", () => {
-    window.focusIsland(-1);
-    setView("free");
-    sph.rTarget = (stage.clientWidth / stage.clientHeight < 1 ? 720 : 520);
-  });
   // drag the panel by its header, resize it from the corner grip, double-click the header to put it back
   const chead = ctrl.querySelector(".chead"), cgrip = document.getElementById("cGrip"), cbody = ctrl.querySelector(".cbody");
   const clampN = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -1789,13 +1770,6 @@ function init3D(){
     ctrl.style.left = ""; ctrl.style.top = ""; ctrl.style.width = "";
     cbody.style.maxHeight = ""; cbody.style.overflowY = "";
   });
-
-  // left-drag mode (旋轉 / 平移) uses the same switch as the top-right button
-  ctrl.querySelectorAll("#cmode button").forEach(b => b.addEventListener("click", () => {
-    const wantPan = b.dataset.m === "pan";
-    if (wantPan !== panMode) modeBtn.click();
-    ctrl.querySelectorAll("#cmode button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-  }));
 
   // floating settings panel
   const setBtn = document.getElementById("setBtn");
@@ -1918,9 +1892,7 @@ function init3D(){
 
     const has = (...ks) => ks.some(k => keys.has(k));
     if (keys.size && !down){
-      const th = sph.theta, sp = sph.r * 0.01;
-      const right = new THREE.Vector3(Math.cos(th), 0, -Math.sin(th));
-      const fwd = new THREE.Vector3(-Math.sin(th), 0, -Math.cos(th));
+      const th = sph.theta;
       if (has("q")) sph.theta += 0.02;
       if (has("e")) sph.theta -= 0.02;
       if (has("+","=")) sph.rTarget = Math.max(160, sph.rTarget * 0.985);
