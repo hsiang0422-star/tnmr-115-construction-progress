@@ -1238,34 +1238,26 @@ function init3D(){
     const geo = gen.children[0].geometry;
     geo.rotateX(-Math.PI / 2);     // after this, getY(i) holds the generated height in 0..1
     const pos = geo.attributes.position;
-    const cols = new Float32Array(pos.count * 3), insideMask = new Uint8Array(pos.count);
+    const cols = new Float32Array(pos.count * 3);
     const cSand = new THREE.Color(P.sand), cGrass = new THREE.Color(P.grass);
     const cLand = new THREE.Color(landColor), c = new THREE.Color();
     for (let i = 0; i < pos.count; i++){
       const px = pos.getX(i) / r, pz = pos.getZ(i) / r;
       const d = Math.hypot(px, pz);
       const th = Math.atan2(pz, px), coast = coastR(th);
-      insideMask[i] = d <= coast ? 1 : 0;
       const inside = sstep(0, 0.14, coast - d);          // 0 at the shore, 1 well inland
       const hills = pos.getY(i);   // THREE.Terrain height, 0..1
       const rolling = (fbm(px * 1.12 + ox, pz * 1.12 + oz) - 0.42) * 4.2;
-      const natural = -14 + inside * (14 + top * 0.43 * hills + rolling);  // irregular, gently rolling slopes
-      const plateau = 1 - sstep(0.72, 1.0, d);                 // preserve a broad, level engineering work area
+      // Continue the terrain below sea level outside the coast so the surface stays watertight.
+      const outerDrop = 9 * sstep(coast, coast + 0.12, d);
+      const natural = -14 - outerDrop + inside * (14 + top * 0.43 * hills + rolling);
+      const plateau = 1 - sstep(0.84, 1.02, d);                 // keep the full building area level
       const y = natural * (1 - plateau) + top * plateau;
       pos.setY(i, y);
       const soilNoise=fbm(px*4.6+ox,pz*4.6+oz);
       c.copy(cSand).lerp(cGrass, sstep(0.6, 3.5, y)).lerp(cLand, plateau * 0.82);
       c.multiplyScalar(0.91+soilNoise*0.2);
       cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
-    }
-    // Keep only complete interior triangles so the coastline cannot leave thin grass spikes.
-    if (geo.index){
-      const source=geo.index.array, visible=[];
-      for(let k=0;k<source.length;k+=3){
-        const a=source[k],b=source[k+1],c=source[k+2];
-        if(insideMask[a]&&insideMask[b]&&insideMask[c]) visible.push(a,b,c);
-      }
-      geo.setIndex(visible);
     }
     geo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
     geo.computeVertexNormals();
