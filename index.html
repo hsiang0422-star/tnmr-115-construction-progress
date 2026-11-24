@@ -88,7 +88,7 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
   background:rgba(8,20,30,.45);
 }
 .sheet[hidden]{display:none!important}
-.sheet-box{position:relative;width:min(900px,100%);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.sheet-box{position:relative;width:min(1100px,100%);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;border-radius:18px;background:var(--card);border:1px solid var(--line)}
 .sheet-head{position:relative;flex:0 0 auto;padding:16px 64px 12px 20px;border-bottom:1px solid var(--line);background:var(--card)}
 .sheet-title{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .sheet-title h2{font-family:"Noto Serif TC",serif;font-size:20px;margin:0;text-wrap:balance}
@@ -102,6 +102,11 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
 }
 .close:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
 .sheet-head .close{position:absolute; top:12px; right:12px; z-index:2}
+.detail-tools{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px}
+.detail-tools button{min-width:42px;padding:5px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.detail-tools button:hover{border-color:var(--jiang)}
+.detail-tools output{min-width:48px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
+.sheet-box #detail{zoom:var(--detail-zoom,1.1)}
 .set-btn{position:absolute; top:56px; right:12px; z-index:2; font:inherit; font-size:13px; padding:7px 12px; border-radius:99px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer}
 .set-btn[aria-expanded="true"]{border-color:var(--warm); box-shadow:0 0 0 2px var(--warm) inset}
 .set-btn:focus-visible{outline:3px solid var(--warm); outline-offset:2px}
@@ -201,7 +206,7 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
 .timeline li.past .tag2{color:var(--warm);font-weight:500}
 
 
-.project-gallery{grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px}.project-gallery h3{margin:0 0 4px;font-size:17px}.project-gallery>p{margin:0 0 12px;color:var(--muted);font-size:13px}.project-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.project-photo{margin:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--card)}.project-photo a{display:block}.project-photo img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;transition:transform .2s}.project-photo a:hover img{transform:scale(1.025)}.project-photo figcaption{padding:9px 12px;font-size:13px;color:var(--muted)}.project-gallery .photo-empty{padding:14px;border:1px dashed var(--line);border-radius:10px;background:var(--card)}
+.project-gallery{grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px}.project-gallery h3{margin:0 0 4px;font-size:17px}.project-gallery>p{margin:0 0 12px;color:var(--muted);font-size:13px}.project-photos{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}.project-photo{margin:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--card)}.project-photo a{display:block}.project-photo img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;transition:transform .2s}.project-photo a:hover img{transform:scale(1.025)}.project-photo figcaption{padding:9px 12px;font-size:13px;color:var(--muted)}.project-gallery .photo-empty{padding:14px;border:1px dashed var(--line);border-radius:10px;background:var(--card)}
 @media(max-width:560px){.project-photos{grid-template-columns:1fr}}
 
 .foot{margin-top:16px;font-size:13px;color:var(--muted)}
@@ -287,6 +292,12 @@ h1{font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft J
       <header class="sheet-head">
         <div class="sheet-title" id="sheetTitle"></div>
         <div id="sheetLegend"></div>
+        <div class="detail-tools" role="group" aria-label="詳細資料大小調整">
+          <button id="detailSmaller" type="button" aria-label="縮小文字與圖片">A−</button>
+          <output id="detailScale" aria-live="polite">110%</output>
+          <button id="detailLarger" type="button" aria-label="放大文字與圖片">A＋</button>
+          <button id="detailReset" type="button" aria-label="恢復預設大小">重設</button>
+        </div>
         <button class="close" id="closeBtn" type="button" aria-label="關閉">×</button>
       </header>
       <div class="sheet-scroll">
@@ -807,6 +818,34 @@ function renderDetail(){
     ${projectPhotoGallery(p)}`;
 }
 function select(i){ openSheet(i); }
+const DETAIL_ZOOM_KEY = "tnmr-construction-detail-zoom";
+const DETAIL_ZOOM_DEFAULT = 1.1;
+const DETAIL_ZOOM_MIN = 0.9;
+const DETAIL_ZOOM_MAX = 1.5;
+let detailZoom = DETAIL_ZOOM_DEFAULT;
+try {
+  const savedZoom = Number(localStorage.getItem(DETAIL_ZOOM_KEY));
+  if (Number.isFinite(savedZoom) && savedZoom >= DETAIL_ZOOM_MIN && savedZoom <= DETAIL_ZOOM_MAX) detailZoom = savedZoom;
+} catch (e) {}
+function applyDetailZoom(save = true){
+  document.getElementById("detail").style.setProperty("--detail-zoom", String(detailZoom));
+  document.getElementById("detailScale").textContent = Math.round(detailZoom * 100) + "%";
+  if (save) { try { localStorage.setItem(DETAIL_ZOOM_KEY, String(detailZoom)); } catch (e) {} }
+}
+document.getElementById("detailSmaller").addEventListener("click", () => {
+  detailZoom = Math.max(DETAIL_ZOOM_MIN, Math.round((detailZoom - 0.1) * 10) / 10);
+  applyDetailZoom();
+});
+document.getElementById("detailLarger").addEventListener("click", () => {
+  detailZoom = Math.min(DETAIL_ZOOM_MAX, Math.round((detailZoom + 0.1) * 10) / 10);
+  applyDetailZoom();
+});
+document.getElementById("detailReset").addEventListener("click", () => {
+  detailZoom = DETAIL_ZOOM_DEFAULT;
+  applyDetailZoom();
+});
+applyDetailZoom(false);
+
 const sheet = document.getElementById("sheet");
 function openSheet(i){
   active = i;
